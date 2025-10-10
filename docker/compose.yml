@@ -150,7 +150,6 @@ services:
       - LOG_CONFS=true
     volumes:
       - ./wireguard/config:/config
-      - ./wireguard/custom_script:/custom-cont-init.d:ro
     ports:
       - ${WIREGUARD_PORT}:${WIREGUARD_PORT}/udp # wireguard port
     sysctls:

@@ -1,5 +1,35 @@
 # selfhosted-vps
 
+My setup for self-hosting a bunch of services on a VPS with a public IP. The VPS also acts as the window to my home server with a dynamic IP. 
+
+All of the services run in docker containers. Some host config is required which is described below.
+
+![Alt text](diagram.webp?raw=true "Diagram")
+
+## Services
+
+Some services are hosted directly on VPS and others are hosted on the home server.
+
+### Hosted directly on VPS
+
+- [Traefik](https://traefik.io/traefik) - The reverse proxy.
+- [Authelia](https://www.authelia.com/) - Almost all services use Authelia for authentication. Some services have their own auth. Check `docker/authelia/configuration.yml` for the config for each service.
+- [Crowdsec](https://www.crowdsec.net/) - Blocks malicious IPs.
+- [Wireguard](https://www.wireguard.com/) - Used to tunnel traffic to the home server.
+- [IT-tools](https://github.com/CorentinTh/it-tools) - Collection of handy online tools for developers, with great UX. 
+- [Watchtower](https://github.com/containrrr/watchtower) - Notifies when docker image updates are available
+- [Stirling-pdf](https://github.com/Stirling-Tools/Stirling-PDF) - Allows you to perform various operations on PDF files 
+- [Prometheus](https://github.com/prometheus/prometheus) - Database for telemetry
+- [Node exporter](https://github.com/prometheus/node_exporter) - Exports the VPS's metrics to prometheus
+- [Grafana](https://github.com/grafana/grafana) - Dashboarding and monitoring
+- [Vaultwarden](https://github.com/dani-garcia/vaultwarden) - Password manager
+- [Backrest](https://github.com/garethgeorge/backrest/) - Awesome Web-UI for backup management built on top of [restic](https://restic.net/).
+- [Apprise](https://github.com/caronc/apprise) - Configurable web service for sending notifications.
+- [Paperless-ngx](https://docs.paperless-ngx.com/) - [Gatus](https://github.com/TwiN/gatus) - Monitoring
+- [Linkwarden](https://github.com/linkwarden/linkwarden) - Bookmarking
+- [Readeck](https://readeck.org/en/) - One more bookmarking tool
+- [Filebrowser](https://github.com/gtsteffaniak/filebrowser) - Web based file explorer for uploading files on VPS quickly.
+
 ## Installation
 
 1. Start with Ubuntu LTS

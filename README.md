@@ -173,7 +173,7 @@ in use when backrest is backing it up. Add the `crons/vaultwarden-backup.sh` scr
 ### Grafana setup
 
 - Generate a random password with more than 60 characters. Set it in the `.env` file in the variable `GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET`.
-- Generate argon2 hash using Authelia docker image `docker run --rm -it authelia/authelia:latest authelia crypto hash generate argon2`. Put the hash in the file `authelia/secrets/oidc/grafana_client_secret.txt`
+- Generate argon2 hash using Authelia docker image `docker run --rm -it authelia/authelia:latest authelia crypto hash generate argon2`. Put the hash in the file `/var/lib/docker-data/authelia/secrets/oidc/grafana_client_secret.txt`
 
 ### Paperless-ngx setup
 

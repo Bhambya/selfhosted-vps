@@ -14,7 +14,7 @@ services:
     container_name: "authelia"
     restart: "unless-stopped"
     volumes:
-      - "./authelia/secrets:/secrets:ro"
+      - "/var/lib/docker-data/authelia/secrets:/secrets:ro"
       - "/var/lib/docker-data/authelia/config/:/config"
       - "./authelia/configuration.yml:/example_config.yml"
       - "/var/log/authelia:/var/log/authelia/"
@@ -27,7 +27,7 @@ services:
       X_AUTHELIA_CONFIG_FILTERS: "template"
       AUTHELIA_NOTIFIER_SMTP_ADDRESS: smtp://${SMTP_HOST}:${SMTP_PORT}
       AUTHELIA_NOTIFIER_SMTP_USERNAME: ${SMTP_USERNAME}
-      AUTHELIA_NOTIFIER_SMTP_SUBJECT: "[Delphi Softwares] {title}"
+      AUTHELIA_NOTIFIER_SMTP_SUBJECT: "[Ganesh Bhambarkar] {title}"
       AUTHELIA_NOTIFIER_SMTP_SENDER: ${SMTP_SENDER}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       LINKWARDEN_OAUTH_DIGEST: ${LINKWARDEN_OAUTH_DIGEST}

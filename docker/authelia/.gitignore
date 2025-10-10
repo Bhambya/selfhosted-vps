@@ -1,0 +1,5 @@
+config/configuration.yml
+config/users.yml
+config/db.sqlite3
+config/notification.txt
+/secrets

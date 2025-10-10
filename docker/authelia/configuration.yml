@@ -1,0 +1,222 @@
+server:
+  address: 'tcp4://:9091'
+
+log:
+  level: info
+  file_path: '/var/log/authelia/authelia.log'
+  keep_stdout: true
+
+identity_validation:
+  elevated_session:
+    require_second_factor: true
+  reset_password:
+    jwt_lifespan: '5 minutes'
+    jwt_secret: {{ secret "/secrets/jwt_secret.txt" | mindent 0 "|" | msquote }}
+
+totp:
+  disable: false
+  issuer: '{{ mustEnv "BASE_DOMAIN" }}'
+  period: 30
+  skew: 1
+
+password_policy:
+  zxcvbn:
+    enabled: true
+    min_score: 4
+
+authentication_backend:
+  file:
+    path: '/config/users.yml'
+    password:
+      algorithm: 'argon2'
+      argon2:
+        variant: 'argon2id'
+        iterations: 3
+        memory: 65535
+        parallelism: 4
+        key_length: 32
+        salt_length: 16
+
+access_control:
+  default_policy: 'deny'
+  rules:
+    - domain:
+        - 'auth.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'vw.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'immich.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'grafana.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'jellyfin.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'linkwarden.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'audiobookshelf.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'readeck.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'filebrowser-vps.{{ mustEnv "BASE_DOMAIN" }}'
+      policy: 'bypass' # these have their own auth
+    - domain: 
+        - 'traefik-dashboard.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'px-home.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'apprise.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'backrest.{{ mustEnv "BASE_DOMAIN" }}' 
+        - 'grafana.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'paperless.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'whoami.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'whoami-home.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'excalidraw.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'gatus.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'vs.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'whatsapp.{{ mustEnv "BASE_DOMAIN" }}'
+      policy: 'two_factor'
+      subject: 'group:admin'
+    - domain: 
+        - 'qbittorrent.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'fb-home.{{ mustEnv "BASE_DOMAIN" }}' 
+      policy: 'two_factor'
+    - domain:
+        - 'stirling-pdf.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'speedtest.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'it-tools.{{ mustEnv "BASE_DOMAIN" }}'
+      policy: 'one_factor'
+
+session:
+  name: 'authelia_session'
+  secret: {{ secret "/secrets/session_secret.txt" | mindent 0 "|" | msquote }}
+  inactivity: '5h'
+  expiration: '10h'
+  remember_me: '20d'
+  redis:
+    host: 'redis'
+    port: 6379
+    timeout: '5s'
+    max_retries: 0
+    username: default
+    password: {{ mustEnv "REDIS_PASSWORD" | mindent 0 "|" | msquote }}
+    database_index: 0
+    maximum_active_connections: 8
+    minimum_idle_connections: 0
+  cookies:
+    - domain: '{{ mustEnv "BASE_DOMAIN" }}'
+      authelia_url: 'https://auth.{{ mustEnv "BASE_DOMAIN" }}'
+
+regulation:
+  max_retries: 4
+  find_time: '1h'
+  ban_time: '2h'
+
+storage:
+  encryption_key: {{ secret "/secrets/storage_encryption_key.txt" | mindent 0 "|" | msquote }}
+  local:
+    path: '/config/db.sqlite3'
+
+notifier:
+  disable_startup_check: false
+  smtp:
+    password: {{ secret "/secrets/smtp_password.txt" | mindent 0 "|" | msquote }}
+
+identity_providers:
+  oidc:
+    ## See: https://www.authelia.com/c/oidc
+    hmac_secret: {{ secret "/secrets/oidc/hmac_secret.txt" | msquote }}
+    jwks:
+      - algorithm: 'RS256'
+        use: 'sig'
+        key: {{ secret "/secrets/oidc/jwks/private.pem" | mindent 10 "|" | msquote }}
+    enable_client_debug_messages: false
+    enforce_pkce: 'public_clients_only'
+    authorization_policies:
+      immich_access:
+        default_policy: 'deny'
+        rules:
+          - policy: 'two_factor'
+            subject: 
+            - ['group:admin', 'group:dev']
+          - policy: 'one_factor'
+            subject: 'group:immich-users'
+    lifespans:
+      access_token: '1h'
+      authorize_code: '1m'
+      id_token: '1h'
+      refresh_token: '90m'
+    cors:
+      endpoints:
+        - 'authorization'
+        - 'token'
+        - 'revocation'
+        - 'introspection'
+        - 'userinfo'
+      allowed_origins:
+        - 'https://{{ mustEnv "BASE_DOMAIN" }}'
+      allowed_origins_from_client_redirect_uris: false
+    clients:
+      - client_id: 'immich'
+        client_name: 'immich'
+        client_secret: {{ secret "/secrets/oidc/immich_client_secret.txt" | msquote }}
+        public: false
+        authorization_policy: 'two_factor'
+        id_token_signed_response_alg: 'RS256'
+        userinfo_signed_response_alg: 'RS256'
+        token_endpoint_auth_method: 'client_secret_post'
+        redirect_uris:
+          - 'https://immich.{{ mustEnv "BASE_DOMAIN" }}/auth/login'
+          - 'https://immich.home.{{ mustEnv "BASE_DOMAIN" }}/auth/login'
+          - 'https://immich.{{ mustEnv "BASE_DOMAIN" }}/user-settings'
+          - 'https://immich.home.{{ mustEnv "BASE_DOMAIN" }}/user-settings'
+          - 'app.immich:///oauth-callback'
+        scopes:
+          - 'openid'
+          - 'profile'
+          - 'email'
+      - client_id: 'grafana'
+        client_name: 'Grafana'
+        client_secret: {{ secret "/secrets/oidc/grafana_client_secret.txt" | msquote }}
+        public: false
+        authorization_policy: 'two_factor'
+        require_pkce: true
+        pkce_challenge_method: 'S256'
+        redirect_uris:
+          - 'https://grafana.{{ mustEnv "BASE_DOMAIN" }}/login/generic_oauth'
+        scopes:
+          - 'openid'
+          - 'profile'
+          - 'groups'
+          - 'email'
+        userinfo_signed_response_alg: 'none'
+        token_endpoint_auth_method: 'client_secret_basic'
+      - client_id: 'jellyfin'
+        client_name: 'jellyfin'
+        client_secret: {{ secret "/secrets/oidc/jellyfin_client_secret.txt" | msquote }}
+        public: false
+        require_pkce: true
+        pkce_challenge_method: 'S256'
+        authorization_policy: 'two_factor'
+        id_token_signed_response_alg: 'RS256'
+        userinfo_signed_response_alg: 'none'
+        token_endpoint_auth_method: 'client_secret_post'
+        redirect_uris:
+          - 'https://jellyfin.{{ mustEnv "BASE_DOMAIN" }}/sso/OID/r/authelia'
+          - 'http://jellyfin.{{ mustEnv "BASE_DOMAIN" }}/sso/OID/r/authelia'
+          - 'https://jellyfin.{{ mustEnv "BASE_DOMAIN" }}/sso/OID/redirect/authelia'
+          - 'http://jellyfin.{{ mustEnv "BASE_DOMAIN" }}/sso/OID/redirect/authelia'
+          - 'https://jellyfin.home.{{ mustEnv "BASE_DOMAIN" }}/sso/OID/r/authelia'
+          - 'http://jellyfin.home.{{ mustEnv "BASE_DOMAIN" }}/sso/OID/r/authelia'
+          - 'https://jellyfin.home.{{ mustEnv "BASE_DOMAIN" }}/sso/OID/redirect/authelia'
+          - 'http://jellyfin.home.{{ mustEnv "BASE_DOMAIN" }}/sso/OID/redirect/authelia'
+        scopes:
+          - 'openid'
+          - 'profile'
+          - 'email'
+          - 'groups'
+      - client_id: linkwarden
+        client_name: linkwarden
+        client_secret: {{ mustEnv "LINKWARDEN_OAUTH_DIGEST" | msquote }}
+        public: false
+        authorization_policy: two_factor
+        token_endpoint_auth_method: 'client_secret_basic'
+        scopes:
+          - openid
+          - groups
+          - email
+          - profile
+        redirect_uris:
+          - https://linkwarden.{{ mustEnv "BASE_DOMAIN" }}/api/v1/auth/callback/authelia
+        userinfo_signed_response_alg: none
+
+

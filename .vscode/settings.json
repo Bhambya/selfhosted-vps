@@ -1,0 +1,21 @@
+{
+  "cSpell.words": [
+    "authelia",
+    "bhambya",
+    "cadvisor",
+    "gatus",
+    "healthcheck",
+    "traefik",
+    "vaultwarden"
+  ],
+  "cSpell.ignorePaths": [
+    "package-lock.json",
+    "node_modules",
+    "vscode-extension",
+    ".git/{info,lfs,logs,refs,objects}/**",
+    ".git/{index,*refs,*HEAD}",
+    ".vscode",
+    ".vscode-insiders",
+    "docker/compose.yml"
+  ]
+}

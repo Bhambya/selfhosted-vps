@@ -1,0 +1,166 @@
+alerting:
+  telegram:
+    token: $ALERTING_TELEGRAM_BOT_TOKEN
+    id: $ALERTING_TELEGRAM_CHAT_ID
+  custom:
+    url: "http://whatsapp:5000/api/message"
+    method: "POST"
+    body: |
+      {
+        "phone_number": "${ALERTING_WHATSAPP_PHONE_NUMBER}",
+        "message": "[ALERT_TRIGGERED_OR_RESOLVED]"
+      }
+    headers:
+      "Content-Type": "application/json"
+    client:
+      timeout: "60s"
+    placeholders:
+      ALERT_TRIGGERED_OR_RESOLVED:
+        TRIGGERED: "Automatic message:❌ घरातील कॉम्पुटरशी संपर्क तुटला."
+        RESOLVED: "Automatic message:✅ घरातील कॉम्पुटरशी परत संपर्क झाला."
+
+storage:
+  type: sqlite
+  path: /data/data.db
+
+metrics: true
+
+endpoints:
+  - name: authelia
+    url: "https://auth.${BASE_DOMAIN}/"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "VPS: healthcheck failed"
+        send-on-resolved: true
+
+  - name: backrest
+    url: "http://backrest:9898"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "VPS: healthcheck failed"
+        send-on-resolved: true
+
+  - name: it-tools
+    url: "http://it-tools"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "VPS: healthcheck failed"
+        send-on-resolved: true
+
+  - name: grafana
+    url: "http://grafana:3000/api/health"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY].database == ok"
+    alerts:
+      - type: telegram
+        description: "VPS: healthcheck failed"
+        send-on-resolved: true
+
+  - name: paperless-ngx
+    url: "http://paperless-ngx:8000/"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "VPS: healthcheck failed"
+        send-on-resolved: true
+
+  - name: prometheus
+    url: "http://prometheus:9090/-/ready"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "VPS: healthcheck failed"
+        send-on-resolved: true
+
+  - name: apprise
+    url: "http://apprise:8000/status"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+      - "[BODY] == pat(OK)"
+    alerts:
+      - type: telegram
+        description: "VPS: healthcheck failed"
+        send-on-resolved: true
+
+  - name: stirling-pdf
+    url: "http://stirling-pdf:8080/"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "VPS: healthcheck failed"
+        send-on-resolved: true
+
+  - name: whoami
+    url: "http://whoami/"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "VPS: healthcheck failed"
+        send-on-resolved: true
+
+  - name: vaultwarden
+    url: "https://vw.${BASE_DOMAIN}/alive"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "VPS: healthcheck failed"
+        send-on-resolved: true
+
+  - name: "Home reverse-proxy reachability"
+    url: "https://wireguard/"
+    client:
+      insecure: true
+    interval: 60s
+    headers:
+      Host: proxmox.home.${BASE_DOMAIN}
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "VPS: healthcheck failed"
+        send-on-resolved: true
+      - type: custom
+        send-on-resolved: true
+
+  - name: whatsapp
+    url: "http://whatsapp:5000/api/dry_run_message"
+    method: "POST"
+    body: |
+      {
+        "phone_number": "${ALERTING_WHATSAPP_PHONE_NUMBER}"
+      }
+    headers:
+      "Content-Type": "application/json"
+    interval: 1h
+    conditions:
+      - "[STATUS] == 200"
+    client:
+      timeout: "20s"
+    alerts:
+      - type: telegram
+        failure-threshold: 1
+        success-threshold: 1
+        description: "VPS: healthcheck failed"
+        send-on-resolved: true

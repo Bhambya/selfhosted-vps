@@ -1,0 +1,615 @@
+services:
+  redis:
+    image: "redis:8.2.1"
+    container_name: "redis"
+    restart: unless-stopped
+    networks:
+      redis:
+    command: bash -c 'redis-server --port 6379 --save 20 1 --loglevel warning --requirepass "${REDIS_PASSWORD}"'
+    volumes:
+      - redis-cache:/data
+
+  authelia:
+    image: "authelia/authelia:4.39.11"
+    container_name: "authelia"
+    restart: "unless-stopped"
+    volumes:
+      - "./authelia/secrets:/secrets:ro"
+      - "/var/lib/docker-data/authelia/config/:/config"
+      - "./authelia/configuration.yml:/example_config.yml"
+      - "/var/log/authelia:/var/log/authelia/"
+    networks:
+      authelia:
+      redis:
+    environment:
+      TZ: ${TIME_ZONE}
+      BASE_DOMAIN: ${BASE_DOMAIN}
+      X_AUTHELIA_CONFIG_FILTERS: "template"
+      AUTHELIA_NOTIFIER_SMTP_ADDRESS: smtp://${SMTP_HOST}:${SMTP_PORT}
+      AUTHELIA_NOTIFIER_SMTP_USERNAME: ${SMTP_USERNAME}
+      AUTHELIA_NOTIFIER_SMTP_SUBJECT: "[Delphi Softwares] {title}"
+      AUTHELIA_NOTIFIER_SMTP_SENDER: ${SMTP_SENDER}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      LINKWARDEN_OAUTH_DIGEST: ${LINKWARDEN_OAUTH_DIGEST}
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "authelia"
+      traefik.http.routers.authelia.rule: "Host(`auth.${BASE_DOMAIN}`)"
+      traefik.http.middlewares.authelia.forwardAuth.address: "http://authelia:9091/api/authz/forward-auth"
+      traefik.http.middlewares.authelia.forwardAuth.trustForwardHeader: "true"
+      traefik.http.middlewares.authelia.forwardAuth.authResponseHeaders: "Remote-User,Remote-Groups,Remote-Name,Remote-Email"
+    depends_on:
+      - "redis"
+    command:
+      > # this is needed because authelia changes the owner of the config to root
+      sh -c 'cp /example_config.yml /config/configuration.yml
+      && authelia'
+
+  traefik:
+    image: "traefik:v3.5.3"
+    container_name: "traefik"
+    restart: "unless-stopped"
+    security_opt:
+      - "no-new-privileges:true"
+    networks:
+      wireguard:
+      proxy:
+      authelia:
+      prometheus:
+      paperless:
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      TZ: ${TIME_ZONE}
+      CF_API_EMAIL: ${CF_API_EMAIL}
+      CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
+      BASE_DOMAIN: ${BASE_DOMAIN}
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik/config/traefik.yml:/traefik.yml:ro"
+      - "./traefik/config/dynamic.yml:/dynamic.yml:ro"
+      - "./traefik/data/acme.json:/data/acme.json"
+      - "/var/log/traefik:/logs"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.traefik-secure.rule: "Host(`traefik-dashboard.${BASE_DOMAIN}`)"
+      traefik.http.routers.traefik-secure.service: "api@internal"
+      traefik.http.routers.traefik-secure.tls: "true"
+
+  whoami:
+    image: "traefik/whoami:v1.11"
+    restart: "unless-stopped"
+    container_name: "whoami"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.whoami-secure.rule: "Host(`whoami.${BASE_DOMAIN}`)"
+      traefik.http.routers.whoami-secure.tls: "true"
+    networks:
+      proxy:
+
+  crowdsec:
+    image: "crowdsecurity/crowdsec:v1.7.0"
+    container_name: crowdsec
+    environment:
+      TZ: ${TIME_ZONE}
+      GID: "${GID-1000}"
+      COLLECTIONS: "crowdsecurity/linux crowdsecurity/traefik crowdsecurity/sshd LePresidente/authelia Dominic-Wagner/vaultwarden"
+    ports:
+      - "127.0.0.1:9310:8080" # exposed for crowdsec-firewall-bouncer
+    depends_on:
+      - "traefik"
+    volumes:
+      - ./crowdsec/config/acquis.yaml:/etc/crowdsec/acquis.yaml
+      - ./crowdsec/config/profiles.yaml:/etc/crowdsec/profiles.yaml
+      - crowdsec-db:/var/lib/crowdsec/data/
+      - crowdsec-config:/etc/crowdsec/
+      - /var/log/authelia:/var/log/authelia:ro
+      - /var/log/traefik/:/var/log/traefik/:ro
+      - /var/log/vaultwarden/:/var/log/vaultwarden/:ro
+      - /var/log/auth.log:/var/log/auth.log:ro
+      - ./crowdsec/immich-whitelist.yaml:/etc/crowdsec/parsers/s02-enrich/immich-whitelist.yaml:ro # immich whitelist rules
+      - ./crowdsec/grafana-whitelist.yaml:/etc/crowdsec/parsers/s02-enrich/grafana-whitelist.yaml:ro # grafana whitelist rules
+    networks:
+      - proxy
+      - prometheus
+    restart: unless-stopped
+
+  bouncer-traefik:
+    image: "docker.io/fbonalair/traefik-crowdsec-bouncer:0.5.0"
+    container_name: bouncer-traefik
+    networks:
+      - proxy # same network as traefik + crowdsec
+    depends_on:
+      - crowdsec
+    restart: unless-stopped
+    environment:
+      TZ: ${TIME_ZONE}
+      CROWDSEC_AGENT_HOST: "crowdsec:8080"
+      CROWDSEC_BOUNCER_API_KEY: ${CROWDSEC_BOUNCER_API_KEY}
+
+  wireguard:
+    image: "lscr.io/linuxserver/wireguard:1.0.20250521"
+    container_name: wireguard
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE #optional
+    networks:
+      - wireguard
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TIME_ZONE}
+      - SERVERURL=${VPS_HOST}
+      - SERVERPORT=${WIREGUARD_PORT}
+      - PEERS=homeServer
+      - PEERDNS=auto
+      - INTERNAL_SUBNET=10.13.13.0/24
+      - SERVER_ALLOWEDIPS_PEER_homeServer=10.13.13.2/32
+      - PERSISTENTKEEPALIVE_PEERS=all
+      - LOG_CONFS=true
+    volumes:
+      - ./wireguard/config:/config
+      - ./wireguard/custom_script:/custom-cont-init.d:ro
+    ports:
+      - ${WIREGUARD_PORT}:${WIREGUARD_PORT}/udp # wireguard port
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    restart: unless-stopped
+    labels:
+      traefik.enable: "false"
+
+  it-tools:
+    image: "corentinth/it-tools:2024.10.22-7ca5933"
+    restart: "unless-stopped"
+    container_name: "it-tools"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.it-tools.rule: "Host(`it-tools.${BASE_DOMAIN}`)"
+      traefik.http.services.it-tools.loadbalancer.server.port: "80"
+      traefik.http.routers.it-tools.tls: "true"
+    networks:
+      proxy:
+
+  watchtower:
+    container_name: "watchtower"
+    image: "beatkind/watchtower:2.3.2"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    environment:
+      TZ: ${TIME_ZONE}
+      WATCHTOWER_SCHEDULE: "0 0 4 * * 0" # every Sunday 4 AM
+      WATCHTOWER_INCLUDE_RESTARTING: true
+      WATCHTOWER_INCLUDE_STOPPED: true
+      WATCHTOWER_MONITOR_ONLY: true
+      WATCHTOWER_NOTIFICATION_REPORT: true
+      WATCHTOWER_NOTIFICATION_URL: "telegram://${ALERTING_TELEGRAM_BOT_TOKEN}@telegram/?chats=${ALERTING_TELEGRAM_CHAT_ID}"
+      WATCHTOWER_NOTIFICATION_TEMPLATE: |2
+        {{- if .Report -}}
+          {{- with .Report -}}
+            {{- if ( or .Stale .Failed ) -}}
+        VPS:{{"\n"}}
+        {{len .Scanned}} Scanned, {{len .Stale}} Stale, {{len .Failed}} Failed
+              {{- range .Stale}}
+        - {{.Name}} ({{.ImageName}}): {{.CurrentImageID.ShortID}} updated to {{.LatestImageID.ShortID}}
+              {{- end -}}
+              {{- range .Failed}}
+        - {{.Name}} ({{.ImageName}}): {{.State}}: {{.Error}}
+              {{- end -}}
+            {{- end -}}
+          {{- end -}}
+        {{- else -}}
+          {{range .Entries -}}{{.Message}}{{"\n"}}{{- end -}}
+        {{- end -}}
+
+  stirling-pdf:
+    container_name: "stirling-pdf"
+    image: "stirlingtools/stirling-pdf:1.3.2"
+    volumes:
+      - ./stirling-pdf/trainingData:/usr/share/tessdata # Required for extra OCR languages
+      - ./stirling-pdf/extraConfigs:/configs
+      - ./stirling-pdf/customFiles:/customFiles/
+      - ./stirling-pdf/logs:/logs/
+      - ./stirling-pdf/pipeline:/pipeline/
+    deploy:
+      resources:
+        limits:
+          memory: 1200M
+    environment:
+      - TZ=${TIME_ZONE}
+      - DOCKER_ENABLE_SECURITY=false
+      - LANGS=en_GB
+    restart: unless-stopped
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.stirling-pdf.rule: "Host(`stirling-pdf.${BASE_DOMAIN}`)"
+      traefik.http.services.stirling-pdf.loadbalancer.server.port: "8080"
+      traefik.http.routers.stirling-pdf.tls: "true"
+    networks:
+      proxy:
+
+  prometheus:
+    image: "prom/prometheus:v3.6.0"
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--web.enable-otlp-receiver"
+    networks:
+      prometheus:
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prom_data:/prometheus
+
+  node_exporter:
+    image: "quay.io/prometheus/node-exporter:v1.9.1"
+    container_name: node_exporter
+    command:
+      - "--path.rootfs=/host"
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - "/:/host:ro,rslave"
+
+  grafana:
+    image: "grafana/grafana:12.2"
+    container_name: grafana
+    user: root
+    networks:
+      proxy:
+      prometheus:
+    restart: unless-stopped
+    environment:
+      TZ: ${TIME_ZONE}
+      GF_ENABLE_GZIP: true
+      GF_SERVER_ROOT_URL: ${GF_SERVER_ROOT_URL}
+      GF_AUTH_BASIC_ENABLED: false
+      GF_AUTH_DISABLE_LOGIN_FORM: true
+      GF_AUTH_GENERIC_OAUTH_ENABLED: true
+      GF_AUTH_GENERIC_OAUTH_NAME: Authelia
+      GF_AUTH_GENERIC_OAUTH_ICON: signin
+      GF_AUTH_GENERIC_OAUTH_CLIENT_ID: grafana
+      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET: ${GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET}
+      GF_AUTH_GENERIC_OAUTH_SCOPES: openid profile email groups
+      GF_AUTH_GENERIC_OAUTH_EMPTY_SCOPES: false
+      GF_AUTH_GENERIC_OAUTH_AUTH_URL: https://auth.${BASE_DOMAIN}/api/oidc/authorization
+      GF_AUTH_GENERIC_OAUTH_TOKEN_URL: https://auth.${BASE_DOMAIN}/api/oidc/token
+      GF_AUTH_GENERIC_OAUTH_API_URL: https://auth.${BASE_DOMAIN}/api/oidc/userinfo
+      GF_AUTH_GENERIC_OAUTH_LOGIN_ATTRIBUTE_PATH: preferred_username
+      GF_AUTH_GENERIC_OAUTH_GROUPS_ATTRIBUTE_PATH: groups
+      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_STRICT: true
+      GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH: "'Admin'"
+      GF_AUTH_GENERIC_OAUTH_ALLOWED_GROUPS: admin
+      GF_AUTH_GENERIC_OAUTH_NAME_ATTRIBUTE_PATH: name
+      GF_AUTH_GENERIC_OAUTH_USE_PKCE: true
+      GF_PLUGINS_PREINSTALL: "grafana-exploretraces-app, grafana-lokiexplore-app, grafana-metricsdrilldown-app, grafana-pyroscope-app"
+      TELEGRAM_BOT_TOKEN: ${ALERTING_TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${ALERTING_TELEGRAM_CHAT_ID}
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - "./grafana/dashboards:/dashboards:ro"
+      - "/var/lib/docker-data/grafana:/var/lib/grafana"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.grafana.rule: "Host(`grafana.${BASE_DOMAIN}`)"
+      traefik.http.services.grafana.loadbalancer.server.port: "3000"
+      traefik.http.routers.grafana.tls: "true"
+
+  vaultwarden:
+    image: "ghcr.io/dani-garcia/vaultwarden:1.34.3"
+    container_name: vaultwarden
+    networks:
+      proxy:
+    restart: unless-stopped
+    environment:
+      TZ: ${TIME_ZONE}
+      DOMAIN: "https://vw.${BASE_DOMAIN}"
+      # ADMIN_TOKEN: ${VW_ADMIN_TOKEN}
+      SIGNUPS_ALLOWED: false
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_FROM_NAME: Vaultwarden
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM: ${SMTP_SENDER}
+      LOG_TIMESTAMP_FORMAT: "%Y-%m-%d %H:%M:%S.%3f%z" # crowdsec parser needs UTC timestamp
+      LOG_FILE: "/logs/vaultwarden.log"
+    volumes:
+      - /var/lib/docker-data/vaultwarden/:/data/
+      - /var/log/vaultwarden/:/logs/
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.vaultwarden.rule: "Host(`vw.${BASE_DOMAIN}`)"
+      traefik.http.services.vaultwarden.loadbalancer.server.port: "80"
+      traefik.http.routers.vaultwarden.tls: "true"
+
+  backrest:
+    image: "garethgeorge/backrest:v1.9.2"
+    container_name: backrest
+    networks:
+      proxy:
+    restart: unless-stopped
+    volumes:
+      - /var/lib/docker-data/backrest/data:/data/
+      - /var/lib/docker-data/backrest/config:/config/
+      - /var/lib/docker-data/backrest/cache:/cache/
+      # backup paths
+      - /var/lib/docker-data/authelia/:/var/lib/docker-data/authelia:ro
+      - /var/lib/docker-data/vaultwarden:/var/lib/docker-data/vaultwarden:ro
+      - /var/lib/docker-data/apprise/config:/var/lib/docker-data/apprise/config/:ro
+      - /var/lib/docker-data/backrest/config:/var/lib/docker-data/backrest/config/:ro
+      - /var/lib/docker-data/paperless-ngx:/var/lib/docker-data/paperless-ngx:ro
+      - /var/lib/docker-data/readeck:/var/lib/docker-data/readeck:ro
+    environment:
+      TZ: ${TIME_ZONE}
+      BACKREST_DATA: /data
+      BACKREST_CONFIG: /config/config.json
+      XDG_CACHE_HOME: /cache
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.backrest.rule: "Host(`backrest.${BASE_DOMAIN}`)"
+      traefik.http.services.backrest.loadbalancer.server.port: "9898"
+      traefik.http.routers.backrest.tls: "true"
+
+  apprise:
+    image: "caronc/apprise:1.2"
+    container_name: apprise
+    networks:
+      proxy:
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    volumes:
+      - /var/lib/docker-data/apprise/config:/config/
+    ports:
+      - "127.0.0.1:8000:8000" # exposed for sending cron messages
+    labels:
+      traefik.enable: "false" # enable to enable the webui or remote access
+      traefik.http.routers.apprise.rule: "Host(`apprise.${BASE_DOMAIN}`)"
+      traefik.http.services.apprise.loadbalancer.server.port: "8000"
+      traefik.http.routers.apprise.tls: "true"
+
+  gotenberg:
+    image: "docker.io/gotenberg/gotenberg:8.23.2"
+    container_name: gotenberg
+    restart: unless-stopped
+    networks:
+      paperless:
+
+    # The gotenberg chromium route is used to convert .eml files. We do not
+    # want to allow external content like tracking pixels or even javascript.
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--chromium-allow-list=file:///tmp/.*"
+
+  tika:
+    image: "docker.io/apache/tika:3.2.3.0"
+    container_name: tika
+    networks:
+      paperless:
+    restart: unless-stopped
+
+  paperless-ngx:
+    image: "ghcr.io/paperless-ngx/paperless-ngx:2.18"
+    container_name: paperless-ngx
+    restart: unless-stopped
+    networks:
+      paperless:
+      redis:
+    depends_on:
+      - redis
+      - gotenberg
+      - tika
+    volumes:
+      - /var/lib/docker-data/paperless-ngx/data:/usr/src/paperless/data
+      - /var/lib/docker-data/paperless-ngx/media:/usr/src/paperless/media
+      - ./paperless-ngx/export:/usr/src/paperless/export
+      - ./paperless-ngx/consume:/usr/src/paperless/consume
+      - ./paperless-ngx/scripts:/usr/src/paperless/scripts
+    environment:
+      PAPERLESS_REDIS: redis://default:${REDIS_PASSWORD}@redis:6379
+      PAPERLESS_URL: https://paperless.${BASE_DOMAIN}
+      PAPERLESS_TIKA_ENABLED: 1
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+      PAPERLESS_EMAIL_HOST: ${SMTP_HOST}
+      PAPERLESS_EMAIL_PORT: ${SMTP_PORT}
+      PAPERLESS_EMAIL_HOST_USER: ${SMTP_USERNAME}
+      PAPERLESS_EMAIL_FROM: "Paperless-ngx <${SMTP_SENDER}>"
+      PAPERLESS_EMAIL_HOST_PASSWORD: ${SMTP_PASSWORD}
+      PAPERLESS_EMAIL_USE_TLS: true
+      PAPERLESS_PRE_CONSUME_SCRIPT: /usr/src/paperless/scripts/removepassword.py
+      ENCRYPTED_FILE_PASSWORDS: ${PAPERLESS_ENCRYPTED_FILE_PASSWORDS}
+      PAPERLESS_GMAIL_OAUTH_CLIENT_ID: ${PAPERLESS_GMAIL_OAUTH_CLIENT_ID}
+      PAPERLESS_GMAIL_OAUTH_CLIENT_SECRET: ${PAPERLESS_GMAIL_OAUTH_CLIENT_SECRET}
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 20000
+        hard: 40000
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "paperless"
+      traefik.http.routers.paperless.rule: "Host(`paperless.${BASE_DOMAIN}`)"
+      traefik.http.services.paperless.loadbalancer.server.port: "8000"
+      traefik.http.routers.paperless.tls: "true"
+
+  cadvisor:
+    image: "gcr.io/cadvisor/cadvisor:v0.52.1"
+    devices:
+      - /dev/kmsg
+    privileged: true
+    restart: unless-stopped
+    container_name: cadvisor
+    networks:
+      prometheus:
+    volumes:
+      - "/dev/disk/:/dev/disk:ro"
+      - "/var/lib/docker/:/var/lib/docker:ro"
+      - "/sys:/sys:ro"
+      - "/var/run:/var/run:ro"
+      - "/:/rootfs:ro"
+
+  gatus:
+    image: "ghcr.io/twin/gatus:v5.26.0"
+    container_name: gatus
+    networks:
+      proxy:
+      prometheus:
+      paperless:
+      wireguard:
+    restart: unless-stopped
+    environment:
+      - ALERTING_TELEGRAM_BOT_TOKEN=$ALERTING_TELEGRAM_BOT_TOKEN
+      - ALERTING_TELEGRAM_CHAT_ID=$ALERTING_TELEGRAM_CHAT_ID
+      - ALERTING_WHATSAPP_PHONE_NUMBER=$ALERTING_WHATSAPP_PHONE_NUMBER
+      - BASE_DOMAIN=$BASE_DOMAIN
+    volumes:
+      - "./gatus/config.yaml:/config/config.yaml:ro"
+      - "/var/lib/docker-data/gatus/:/data/"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.gatus.rule: "Host(`gatus.${BASE_DOMAIN}`)"
+      traefik.http.services.gatus.loadbalancer.server.port: "8080"
+      traefik.http.routers.gatus.tls: "true"
+
+  postgres:
+    container_name: postgres
+    image: postgres:17.6-alpine
+    networks:
+      - postgres
+    environment:
+      - POSTGRES_PASSWORD=password
+    restart: unless-stopped
+    volumes:
+      - /var/lib/docker-data/postgres:/var/lib/postgresql/data
+
+  linkwarden:
+    image: ghcr.io/linkwarden/linkwarden:v2.13.0
+    container_name: linkwarden
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/linkwarden
+      NEXT_PUBLIC_DISABLE_REGISTRATION: true
+      NEXTAUTH_URL: https://linkwarden.${BASE_DOMAIN}/api/v1/auth
+      NEXTAUTH_SECRET: "${LINKWARDEN_OAUTH_SECRET}"
+      NEXT_PUBLIC_AUTHELIA_ENABLED: true
+      NEXT_PUBLIC_CREDENTIALS_ENABLED: false
+      AUTHELIA_WELLKNOWN_URL: https://auth.${BASE_DOMAIN}/.well-known/openid-configuration
+      AUTHELIA_CLIENT_ID: linkwarden
+      AUTHELIA_CLIENT_SECRET: "${LINKWARDEN_OAUTH_SECRET}"
+    restart: unless-stopped
+    volumes:
+      - /var/lib/docker-data/linkwarden:/data/data
+    depends_on:
+      - postgres
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+    networks:
+      - proxy
+      - postgres
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.linkwarden.rule: "Host(`linkwarden.${BASE_DOMAIN}`)"
+      traefik.http.services.linkwarden.loadbalancer.server.port: "3000"
+      traefik.http.routers.linkwarden.tls: "true"
+
+  whatsapp:
+    container_name: whatsapp
+    restart: unless-stopped
+    build:
+      context: ./docker-whatsapp
+      dockerfile: ./Dockerfile
+    environment:
+      - PUID=1001
+      - PGID=1001
+      - TZ=Etc/UTC
+    ports:
+      - 127.0.0.1:5000:5000 # notification server
+    volumes:
+      - whatsapp_volume:/config
+    shm_size: "1gb"
+    security_opt:
+      - seccomp:unconfined
+    networks:
+      - proxy
+    labels:
+      traefik.enable: "false" # enable to login with QR code
+      traefik.http.routers.chromium.rule: "Host(`whatsapp.${BASE_DOMAIN}`)"
+      traefik.http.services.chromium.loadbalancer.server.port: "3000"
+      traefik.http.routers.chromium.tls: "true"
+
+  readeck:
+    image: "codeberg.org/readeck/readeck:0.20.3"
+    container_name: readeck
+    restart: unless-stopped
+    volumes:
+      - "/var/lib/docker-data/readeck:/readeck"
+    networks:
+      - proxy
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.readeck.rule: "Host(`readeck.${BASE_DOMAIN}`)"
+      traefik.http.services.readeck.loadbalancer.server.port: "8000"
+      traefik.http.routers.readeck.tls: "true"
+
+  filebrowser:
+    container_name: "filebrowser"
+    image: "gtstef/filebrowser:0.8.8-beta"
+    restart: "unless-stopped"
+    user: $USER
+    environment:
+      FILEBROWSER_CONFIG: "/config/config.yaml"
+      FILEBROWSER_ADMIN_PASSWORD: $FILEBROWSER_ADMIN_PASSWORD
+    networks:
+      proxy:
+    volumes:
+      - "filebrowser_data:/home/filebrowser/data"
+      - "./filebrowser/config:/config"
+      - "$FILEBROWSER_SRV_PATH:/srv"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.filebrowser.rule: "Host(`filebrowser-vps.${BASE_DOMAIN}`)"
+      traefik.http.services.filebrowser.loadbalancer.server.port: "80"
+      traefik.http.routers.filebrowser.tls: "true"
+
+volumes:
+  crowdsec-db:
+    name: crowdsec-db
+  crowdsec-config:
+    name: crowdsec-config
+  redis-cache:
+    name: redis-cache
+  prom_data:
+  filebrowser_data:
+    name: "filebrowser_data"
+  whatsapp_volume:
+    name: "whatsapp_volume"
+
+networks:
+  proxy:
+    name: "proxy"
+  authelia:
+    name: "authelia"
+  redis:
+  wireguard:
+  prometheus:
+  paperless:
+    name: "paperless"
+  postgres:

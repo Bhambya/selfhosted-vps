@@ -1,0 +1,182 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "timezone": "UTC",
+  "minimumReleaseAge": "3 days", 
+  "prConcurrentLimit": 30,
+  "prHourlyLimit": 10,
+  "labels": [
+    "dependencies",
+    "renovate"
+  ],
+  "assignees": [
+    "Bhambya"
+  ],
+  "reviewers": [
+    "Bhambya"
+  ],
+  "platformAutomerge": false,
+  "automerge": false,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": [
+      "security",
+      "vulnerability"
+    ]
+  },
+  "docker-compose": {
+    "enabled": true
+  },
+  "packageRules": [
+    {
+      "matchCategories": [
+        "docker"
+      ],
+      "enabled": true,
+      "pinDigests": false
+    },
+    {
+      "description": "Group all Docker updates together",
+      "matchDatasources": [
+        "docker"
+      ],
+      "groupName": "Docker images"
+    },
+    {
+      "description": "Separate security updates for faster processing",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "matchCurrentVersion": "!/^0\\./",
+      "labels": [
+        "security",
+        "patch"
+      ],
+      "groupName": "Docker security patches"
+    },
+    {
+      "description": "Handle major version updates separately",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "labels": [
+        "major-update"
+      ],
+      "groupName": "Docker major updates",
+      "extends": ["schedule:weekends"]
+    },
+    {
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "postgres"
+      ],
+      // need to match the version like: 17.6-alpine3.22. We only care about the postgres version.
+      "versioning": "regex:^(?<major>\\d+)(\\.(?<minor>\\d+))?(\\.(?<patch>\\d+))?(\\.(?<build>\\d+))?-(?<compatibility>[[:alpha:]]+).+$"
+    },
+    {
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "corentinth/it-tools"
+      ],
+      // need to match the version like: 2024.10.22-7ca5933.
+      "versioning": "regex:^(?<major>\\d+)(\\.(?<minor>\\d+))?(\\.(?<patch>\\d+))?(\\.(?<build>\\d+))?(-[[:alnum:]]+)?$"
+    },
+    {
+      "description": "Pin specific images that should be updated carefully",
+      "matchPackageNames": [
+        "postgres",
+        "redis",
+        "traefik",
+        "authelia/authelia"
+      ],
+      "labels": [
+        "critical-service"
+      ],
+      "groupName": "Critical service updates",
+      "extends": ["schedule:weekends"],
+      "prPriority": 10
+    },
+    {
+      "description": "Auto-update monitoring and utility tools",
+      "matchPackageNames": [
+        "prom/prometheus",
+        "grafana/grafana",
+        "quay.io/prometheus/node-exporter",
+        "gcr.io/cadvisor/cadvisor",
+        "ghcr.io/twin/gatus"
+      ],
+      "labels": [
+        "monitoring"
+      ],
+      "groupName": "Monitoring tools"
+    },
+    {
+      "description": "Security and access control tools",
+      "matchPackageNames": [
+        "crowdsecurity/crowdsec",
+        "docker.io/fbonalair/traefik-crowdsec-bouncer",
+        "lscr.io/linuxserver/wireguard",
+        "ghcr.io/dani-garcia/vaultwarden"
+      ],
+      "labels": [
+        "security"
+      ],
+      "groupName": "Security tools",
+      "prPriority": 8
+    },
+    {
+      "description": "Document and file management tools",
+      "matchPackageNames": [
+        "ghcr.io/paperless-ngx/paperless-ngx",
+        "docker.io/gotenberg/gotenberg",
+        "docker.io/apache/tika",
+        "docker.stirlingpdf.com/stirlingtools/stirling-pdf",
+        "gtstef/filebrowser"
+      ],
+      "labels": [
+        "document-management"
+      ],
+      "groupName": "Document management"
+    },
+    {
+      "description": "Backup and maintenance tools",
+      "matchPackageNames": [
+        "garethgeorge/backrest",
+        "beatkind/watchtower",
+        "caronc/apprise"
+      ],
+      "labels": [
+        "backup-maintenance"
+      ],
+      "groupName": "Backup and maintenance"
+    }
+  ],
+  "prBodyTemplate": "This PR updates Docker images in your self-hosted VPS setup.\n\n{{{table}}}\n\n{{{notes}}}\n\n---\n\n🤖 This PR was generated automatically by Renovate Bot.\n\n**Before merging:**\n- [ ] Review the changelog/release notes for breaking changes\n- [ ] Test the updated services in a staging environment if possible\n- [ ] Ensure backup procedures are in place\n- [ ] Monitor services after deployment\n\n**Deployment notes:**\n- Run `docker compose -f docker/compose.yml pull` to pull new images\n- Run `docker compose -f docker/compose.yml up -d` to restart services with new images\n- Check service health with `docker compose -f docker/compose.yml ps`",
+  "commitMessageTopic": "{{#if groupName}}{{groupName}}{{else}}{{depName}}{{/if}}",
+  "commitMessageAction": "update",
+  "commitMessageExtra": "{{#if updateType}} ({{updateType}}){{/if}}{{#if newValue}} to {{#if isMajor}}v{{newMajor}}{{else}}{{#if isSingleVersion}}v{{newVersion}}{{else}}{{newValue}}{{/if}}{{/if}}{{/if}}",
+  "gitIgnoredAuthors": [
+    "renovate[bot]"
+  ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/vendor/**",
+    "**/examples/**",
+    "**/test/**",
+    "**/tests/**",
+    "**/__tests__/**"
+  ]
+}

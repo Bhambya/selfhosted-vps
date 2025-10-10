@@ -1,0 +1,3 @@
+[submodule "docker/docker-whatsapp"]
+	path = docker/docker-whatsapp
+	url = https://github.com/Bhambya/docker-whatsapp.git

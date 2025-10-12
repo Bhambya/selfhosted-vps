@@ -19,16 +19,17 @@ Some services are hosted directly on VPS and others are hosted on the home serve
 - [IT-tools](https://github.com/CorentinTh/it-tools) - Collection of handy online tools for developers, with great UX. 
 - [Watchtower](https://github.com/containrrr/watchtower) - Notifies when docker image updates are available
 - [Stirling-pdf](https://github.com/Stirling-Tools/Stirling-PDF) - Allows you to perform various operations on PDF files 
-- [Prometheus](https://github.com/prometheus/prometheus) - Database for telemetry
+- [Prometheus](https://github.com/prometheus/prometheus) - Server for storing and querying telemetry
 - [Node exporter](https://github.com/prometheus/node_exporter) - Exports the VPS's metrics to prometheus
 - [Grafana](https://github.com/grafana/grafana) - Dashboarding and monitoring
 - [Vaultwarden](https://github.com/dani-garcia/vaultwarden) - Password manager
 - [Backrest](https://github.com/garethgeorge/backrest/) - Awesome Web-UI for backup management built on top of [restic](https://restic.net/).
 - [Apprise](https://github.com/caronc/apprise) - Configurable web service for sending notifications.
-- [Paperless-ngx](https://docs.paperless-ngx.com/) - [Gatus](https://github.com/TwiN/gatus) - Monitoring
-- [Linkwarden](https://github.com/linkwarden/linkwarden) - Bookmarking
+- [Paperless-ngx](https://docs.paperless-ngx.com/) - Document management. A BIG upgrade over storing them in Google drive.
+- [Gatus](https://github.com/TwiN/gatus) - Simple webapp monitoring. I find it better than uptime-kuma because I can store the config in code.
+- [Linkwarden](https://github.com/linkwarden/linkwarden) - Bookmarking tool
 - [Readeck](https://readeck.org/en/) - One more bookmarking tool
-- [Filebrowser](https://github.com/gtsteffaniak/filebrowser) - Web based file explorer for uploading files on VPS quickly.
+- [Filebrowser](https://github.com/gtsteffaniak/filebrowser) - Web based file explorer for uploading/downloading files to/from VPS quickly.
 
 ## Installation
 
@@ -154,7 +155,6 @@ Some data is backed up using [backrest](https://github.com/garethgeorge/backrest
 - Apprise: `/var/lib/docker-data/apprise/config`
 - Authelia: `/var/lib/docker-data/authelia/config`
 - Backrest: `/var/lib/docker-data/backrest/config`
-- Uptime-kuma: `/var/lib/docker-data/uptime-kuma`
 
 Unfortunately, the backrest config cannot be checked-in because it doesn't support env variable interpolation: https://github.com/garethgeorge/backrest/issues/788.
 Hence, when setting up for the first time, the repository and backup schedule needs to be configured through the backrest web UI.
@@ -192,11 +192,3 @@ We don't back up some data so we need to regenerate it:
 - Generate the document thumbnails: https://docs.paperless-ngx.com/administration/#thumbnails
 - Generate the index: https://docs.paperless-ngx.com/administration/#index
 - Train the classifier: https://docs.paperless-ngx.com/administration/#managing-the-automatic-matching-algorithm
-
-### uptime-kuma setup
-
-Add the `crons/uptime-kuma-backup.sh` script to root's cron to run daily.
-
-```
-6 2 * * * /home/ubuntu/selfhosted-vps/crons/uptime-kuma-backup.sh || curl -X POST -F "body=uptime-kuma DB backup failed!" http://127.0.0.1:8000/notify/apprise
-```

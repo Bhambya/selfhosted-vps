@@ -499,7 +499,7 @@ services:
       - /var/lib/docker-data/postgres:/var/lib/postgresql/data
 
   linkwarden:
-    image: ghcr.io/linkwarden/linkwarden:v2.13.0
+    image: ghcr.io/linkwarden/linkwarden:v2.13.1
     container_name: linkwarden
     environment:
       DATABASE_URL: postgresql://postgres:password@postgres:5432/linkwarden

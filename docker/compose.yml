@@ -489,7 +489,7 @@ services:
 
   postgres:
     container_name: postgres
-    image: postgres:17.6-alpine
+    image: postgres:18.0-alpine
     networks:
       - postgres
     environment:

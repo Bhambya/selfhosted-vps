@@ -555,7 +555,7 @@ services:
       traefik.http.routers.chromium.tls: "true"
 
   readeck:
-    image: "codeberg.org/readeck/readeck:0.20.3"
+    image: "codeberg.org/readeck/readeck:0.20.4"
     container_name: readeck
     restart: unless-stopped
     volumes:

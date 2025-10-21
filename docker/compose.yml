@@ -496,7 +496,7 @@ services:
       - POSTGRES_PASSWORD=password
     restart: unless-stopped
     volumes:
-      - /var/lib/docker-data/postgres:/var/lib/postgresql/data
+      - /var/lib/docker-data/postgres:/var/lib/postgresql/18/docker
 
   linkwarden:
     image: ghcr.io/linkwarden/linkwarden:v2.13.1

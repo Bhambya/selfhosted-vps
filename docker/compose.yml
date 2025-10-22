@@ -400,7 +400,7 @@ services:
     restart: unless-stopped
 
   paperless-ngx:
-    image: "ghcr.io/paperless-ngx/paperless-ngx:2.18"
+    image: "ghcr.io/paperless-ngx/paperless-ngx:2.19"
     container_name: paperless-ngx
     restart: unless-stopped
     networks:

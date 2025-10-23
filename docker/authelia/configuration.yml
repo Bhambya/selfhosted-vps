@@ -64,6 +64,7 @@ access_control:
         - 'gatus.{{ mustEnv "BASE_DOMAIN" }}'
         - 'vs.{{ mustEnv "BASE_DOMAIN" }}'
         - 'whatsapp.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'github-release-monitor.{{ mustEnv "BASE_DOMAIN" }}'
       policy: 'two_factor'
       subject: 'group:admin'
     - domain: 

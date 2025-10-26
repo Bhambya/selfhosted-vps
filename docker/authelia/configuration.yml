@@ -84,7 +84,7 @@ session:
   expiration: '10h'
   remember_me: '20d'
   redis:
-    host: 'redis'
+    host: 'redis-authelia'
     port: 6379
     timeout: '5s'
     max_retries: 0

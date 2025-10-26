@@ -1,13 +1,13 @@
 services:
-  redis:
+  redis-authelia:
     image: "redis:8.2.2"
-    container_name: "redis"
+    container_name: "redis-authelia"
     restart: unless-stopped
     networks:
-      redis:
+      authelia:
     command: bash -c 'redis-server --port 6379 --save 20 1 --loglevel warning --requirepass "${REDIS_PASSWORD}"'
     volumes:
-      - redis-cache:/data
+      - redis-authelia-cache:/data
 
   authelia:
     image: "authelia/authelia:4.39.11"
@@ -20,7 +20,6 @@ services:
       - "/var/log/authelia:/var/log/authelia/"
     networks:
       authelia:
-      redis:
     environment:
       TZ: ${TIME_ZONE}
       BASE_DOMAIN: ${BASE_DOMAIN}
@@ -40,7 +39,7 @@ services:
       traefik.http.middlewares.authelia.forwardAuth.trustForwardHeader: "true"
       traefik.http.middlewares.authelia.forwardAuth.authResponseHeaders: "Remote-User,Remote-Groups,Remote-Name,Remote-Email"
     depends_on:
-      - "redis"
+      - "redis-authelia"
     command:
       > # this is needed because authelia changes the owner of the config to root
       sh -c 'cp /example_config.yml /config/configuration.yml
@@ -401,15 +400,24 @@ services:
       paperless:
     restart: unless-stopped
 
+  redis-paperless:
+    image: "redis:8.2.2"
+    container_name: "redis-paperless"
+    restart: unless-stopped
+    networks:
+      paperless:
+    command: bash -c 'redis-server --port 6379 --save 20 1 --loglevel warning --requirepass "${REDIS_PASSWORD}"'
+    volumes:
+      - redis-paperless-cache:/data
+
   paperless-ngx:
     image: "ghcr.io/paperless-ngx/paperless-ngx:2.19"
     container_name: paperless-ngx
     restart: unless-stopped
     networks:
       paperless:
-      redis:
     depends_on:
-      - redis
+      - redis-paperless
       - gotenberg
       - tika
     volumes:
@@ -419,7 +427,7 @@ services:
       - ./paperless-ngx/consume:/usr/src/paperless/consume
       - ./paperless-ngx/scripts:/usr/src/paperless/scripts
     environment:
-      PAPERLESS_REDIS: redis://default:${REDIS_PASSWORD}@redis:6379
+      PAPERLESS_REDIS: redis://default:${REDIS_PASSWORD}@redis-paperless:6379
       PAPERLESS_URL: https://paperless.${BASE_DOMAIN}
       PAPERLESS_TIKA_ENABLED: 1
       PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
@@ -614,8 +622,8 @@ volumes:
     name: crowdsec-db
   crowdsec-config:
     name: crowdsec-config
-  redis-cache:
-    name: redis-cache
+  redis-authelia-cache:
+  redis-paperless-cache:
   prom_data:
   filebrowser_data:
     name: "filebrowser_data"
@@ -627,7 +635,6 @@ networks:
     name: "proxy"
   authelia:
     name: "authelia"
-  redis:
   wireguard:
   prometheus:
   paperless:

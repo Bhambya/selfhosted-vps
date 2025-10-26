@@ -112,6 +112,11 @@ notifier:
   smtp:
     password: {{ secret "/secrets/smtp_password.txt" | mindent 0 "|" | msquote }}
 
+definitions:
+  user_attributes:
+    immich_role:
+      expression: '"admin" in groups ? "admin" : "immich-users" in groups ? "user" : ""'
+
 identity_providers:
   oidc:
     ## See: https://www.authelia.com/c/oidc
@@ -124,6 +129,10 @@ identity_providers:
       ## opkssh needs more claims in ID token to be able to verify claims
       opkssh:
         id_token: ['groups']
+      immich:
+        custom_claims:
+          immich_role:
+            attribute: immich_role
     enable_client_debug_messages: false
     enforce_pkce: 'public_clients_only'
     authorization_policies:
@@ -150,12 +159,16 @@ identity_providers:
       allowed_origins:
         - 'https://{{ mustEnv "BASE_DOMAIN" }}'
       allowed_origins_from_client_redirect_uris: false
+    scopes:
+      immich:
+        claims:
+          - immich_role
     clients:
       - client_name: 'immich'
         client_id: {{ secret "/secrets/oidc/immich/client_id.txt" | msquote }}
         client_secret: {{ secret "/secrets/oidc/immich/client_secret_hash.txt" | msquote }}
         public: false
-        authorization_policy: 'two_factor'
+        authorization_policy: 'immich_access'
         id_token_signed_response_alg: 'RS256'
         userinfo_signed_response_alg: 'RS256'
         token_endpoint_auth_method: 'client_secret_post'
@@ -165,10 +178,12 @@ identity_providers:
           - 'https://immich.{{ mustEnv "BASE_DOMAIN" }}/user-settings'
           - 'https://immich.home.{{ mustEnv "BASE_DOMAIN" }}/user-settings'
           - 'app.immich:///oauth-callback'
+        claims_policy: immich
         scopes:
           - 'openid'
           - 'profile'
           - 'email'
+          - 'immich'
       - client_name: 'Grafana'
         client_id:  {{ secret "/secrets/oidc/grafana/client_id.txt" | msquote }}
         client_secret: {{ secret "/secrets/oidc/grafana/client_secret_hash.txt" | msquote }}

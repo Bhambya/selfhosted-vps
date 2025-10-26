@@ -120,6 +120,10 @@ identity_providers:
       - algorithm: 'RS256'
         use: 'sig'
         key: {{ secret "/secrets/oidc/jwks/private.pem" | mindent 10 "|" | msquote }}
+    claims_policies:
+      ## opkssh needs more claims in ID token to be able to verify claims
+      opkssh:
+        id_token: ['groups']
     enable_client_debug_messages: false
     enforce_pkce: 'public_clients_only'
     authorization_policies:
@@ -219,5 +223,29 @@ identity_providers:
         redirect_uris:
           - https://linkwarden.{{ mustEnv "BASE_DOMAIN" }}/api/v1/auth/callback/authelia
         userinfo_signed_response_alg: none
-
+      - client_name: 'opkssh'
+        client_id: {{ secret "/secrets/oidc/opkssh/client_id.txt" | msquote }}
+        client_secret: {{ secret "/secrets/oidc/opkssh/client_secret_hash.txt" | msquote }} 
+        public: false
+        authorization_policy: 'two_factor'
+        require_pkce: true
+        pkce_challenge_method: 'S256'
+        redirect_uris:
+          - 'http://localhost:3000/login-callback'
+          - 'http://localhost:10001/login-callback'
+          - 'http://localhost:11110/login-callback'
+        scopes:
+          - openid
+          - groups
+          - offline_access
+        claims_policy: opkssh
+        response_types:
+          - 'code'
+        grant_types:
+          - 'authorization_code'
+          - 'refresh_token'
+        id_token_signed_response_alg: 'RS256'
+        userinfo_signed_response_alg: 'RS256'
+        access_token_signed_response_alg: 'RS256'
+        token_endpoint_auth_method: 'client_secret_post'
 

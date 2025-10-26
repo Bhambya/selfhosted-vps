@@ -1,6 +1,14 @@
 ## This file can be used to define dynamic routers/services/middlewares.
 http:
   middlewares:
+    my-robots-txt:
+      plugin:
+        robots-txt:
+          aiRobotsTxt: false
+          customRules: |
+            User-agent: *
+            Disallow: /
+          overwrite: true
     cf-ipallowlist:
       ipallowlist:
         sourcerange:

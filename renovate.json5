@@ -99,7 +99,7 @@
         "postgres",
         "redis",
         "traefik",
-        "authelia/authelia"
+        "ghcr.io/authelia/authelia"
       ],
       "labels": [
         "critical-service"

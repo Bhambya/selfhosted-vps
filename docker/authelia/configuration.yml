@@ -136,6 +136,11 @@ identity_providers:
     enable_client_debug_messages: false
     enforce_pkce: 'public_clients_only'
     authorization_policies:
+      proxmox_access:
+        default_policy: 'deny'
+        rules:
+          - policy: 'two_factor'
+            subject: 'group:admin'
       immich_access:
         default_policy: 'deny'
         rules:
@@ -263,4 +268,18 @@ identity_providers:
         userinfo_signed_response_alg: 'RS256'
         access_token_signed_response_alg: 'RS256'
         token_endpoint_auth_method: 'client_secret_post'
-
+      - client_name: 'proxmox'
+        client_id: {{ secret "/secrets/oidc/proxmox/client_id.txt" | msquote }}
+        client_secret: {{ secret "/secrets/oidc/proxmox/client_secret_hash.txt" | msquote }} 
+        public: false
+        authorization_policy: 'proxmox_access'
+        require_pkce: true
+        pkce_challenge_method: 'S256'
+        redirect_uris:
+          - 'https://px-home.{{ mustEnv "BASE_DOMAIN" }}'
+          - 'https://proxmox.home.{{ mustEnv "BASE_DOMAIN" }}'
+        scopes:
+          - 'openid'
+          - 'profile'
+          - 'email'
+          - 'groups'

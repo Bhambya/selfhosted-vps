@@ -89,7 +89,7 @@ services:
       proxy:
 
   crowdsec:
-    image: "crowdsecurity/crowdsec:v1.7.2"
+    image: "crowdsecurity/crowdsec:v1.7.3"
     container_name: crowdsec
     environment:
       TZ: ${TIME_ZONE}

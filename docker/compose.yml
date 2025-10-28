@@ -9,6 +9,27 @@ services:
     volumes:
       - redis-authelia-cache:/data
 
+  lldap:
+    image: "lldap/lldap:v0.6.2"
+    container_name: lldap
+    restart: "unless-stopped"
+    volumes:
+      - "/var/lib/docker-data/lldap:/data"
+    environment:
+      - TZ=$TIME_ZONE
+      - LLDAP_JWT_SECRET=$LLDAP_JWT_SECRET
+      - LLDAP_KEY_SEED=$LLDAP_KEY_SEED
+      - LLDAP_LDAP_BASE_DN=$LLDAP_LDAP_BASE_DN
+      - LLDAP_LDAP_USER_PASS=$LLDAP_LDAP_USER_PASS
+    networks:
+      - proxy
+      - authelia
+    labels:
+      traefik.enable: "false" # enable to add users
+      traefik.http.routers.lldap.rule: "Host(`ldap.${BASE_DOMAIN}`)"
+      traefik.http.services.lldap.loadbalancer.server.port: "17170"
+      traefik.http.routers.lldap.tls: "true"
+
   authelia:
     image: "ghcr.io/authelia/authelia:4.39.13"
     container_name: "authelia"
@@ -24,6 +45,8 @@ services:
       TZ: ${TIME_ZONE}
       BASE_DOMAIN: ${BASE_DOMAIN}
       X_AUTHELIA_CONFIG_FILTERS: "template"
+      AUTHELIA_AUTHENTICATION_BACKEND_LDAP_BASE_DN: ${LLDAP_LDAP_BASE_DN}
+      AUTHELIA_AUTHENTICATION_BACKEND_LDAP_USER: "UID=authelia,OU=people,${LLDAP_LDAP_BASE_DN}"
       AUTHELIA_NOTIFIER_SMTP_ADDRESS: smtp://${SMTP_HOST}:${SMTP_PORT}
       AUTHELIA_NOTIFIER_SMTP_USERNAME: ${SMTP_USERNAME}
       AUTHELIA_NOTIFIER_SMTP_SUBJECT: "[Ganesh Bhambarkar] {title}"
@@ -40,6 +63,7 @@ services:
       traefik.http.middlewares.authelia.forwardAuth.authResponseHeaders: "Remote-User,Remote-Groups,Remote-Name,Remote-Email"
     depends_on:
       - "redis-authelia"
+      - lldap
     command:
       > # this is needed because authelia changes the owner of the config to root
       sh -c 'cp /example_config.yml /config/configuration.yml
@@ -342,6 +366,7 @@ services:
       - /var/lib/docker-data/backrest/cache:/cache/
       # backup paths
       - /var/lib/docker-data/authelia/:/var/lib/docker-data/authelia:ro
+      - /var/lib/docker-data/lldap/:/var/lib/docker-data/lldap:ro
       - /var/lib/docker-data/vaultwarden:/var/lib/docker-data/vaultwarden:ro
       - /var/lib/docker-data/apprise/config:/var/lib/docker-data/apprise/config/:ro
       - /var/lib/docker-data/backrest/config:/var/lib/docker-data/backrest/config/:ro

@@ -25,17 +25,11 @@ password_policy:
     min_score: 4
 
 authentication_backend:
-  file:
-    path: '/config/users.yml'
-    password:
-      algorithm: 'argon2'
-      argon2:
-        variant: 'argon2id'
-        iterations: 3
-        memory: 65535
-        parallelism: 4
-        key_length: 32
-        salt_length: 16
+  ldap:
+    implementation: 'lldap'
+    address: 'ldap://lldap:3890'
+    # base_dn and user are set through env variables
+    password: {{ secret "/secrets/ldap_password.txt" | msquote }}
 
 access_control:
   default_policy: 'deny'
@@ -50,6 +44,7 @@ access_control:
         - 'audiobookshelf.{{ mustEnv "BASE_DOMAIN" }}'
         - 'readeck.{{ mustEnv "BASE_DOMAIN" }}'
         - 'filebrowser-vps.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'ldap.{{ mustEnv "BASE_DOMAIN" }}'
       policy: 'bypass' # these have their own auth
     - domain: 
         - 'traefik-dashboard.{{ mustEnv "BASE_DOMAIN" }}'

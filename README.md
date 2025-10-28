@@ -56,7 +56,7 @@ sudo cp etc/vaultwarden-logrotate.conf /etc/logrotate.d/
 sudo systemctl restart logrotate
 ```
 
-## Updating VPS IP in the Cloudflare DNS
+## Updating VPS IP in the Cloudflare DNS if it's not static
 
 - Clone the github repo `https://github.com/K0p1-Git/cloudflare-ddns-updater`.
 - Update the variables in the script.
@@ -90,6 +90,10 @@ cp .env.example .env # edit this
 docker compose up -d
 ```
 
+### Install crons
+
+Run `sudo ./install_crons.sh` to install some DB backup and crowdsec hub update scripts to the crontab.
+
 ### Wireguard setup
 
 After the `wireguard` docker container is created, add the following lines to the `wireguard/config/wg_confs/wg0.conf` file in the `[Interface]` section:
@@ -105,22 +109,7 @@ This will forward the the ports 80 and 443 of the `wireguard` docker container t
 
 Use the .conf file from the `wireguard/config/peer_homeServer` directory as the wireguard config in the home server.
 
-### Authelia setup
-
-Authelia data is already setup to be backed up using backrest. But we still need to setup daily database backup because the the DB might be
-in use when backrest is backing it up. Add the `crons/authelia-backup.sh` script to root's cron to run daily which does this.
-
-```
-6 2 * * * /home/ubuntu/selfhosted-vps/crons/authelia-backup.sh || curl -X POST -F "body=Authelia DB backup failed!" http://127.0.0.1:8000/notify/apprise
-```
-
 ### Crowdsec setup
-
-- Add `crons/crowsec-hub-upgrade.sh` script to root's cron to run daily which upgrades the definitions from the Crowdsec hub.
-
-```
-0 * * * * /home/ubuntu/selfhosted-vps/crons/crowsec-hub-upgrade.sh || curl -X POST -F "body=Crowdsec hub upgrade failed!" http://127.0.0.1:8000/notify/apprise
-```
 
 - Login to the [Crowdsec console](https://app.crowdsec.net) and enroll the node by following the instructions.
 
@@ -161,27 +150,12 @@ Hence, when setting up for the first time, the repository and backup schedule ne
 
 In case of data loss, restore the latest snapshot using [restic](https://github.com/restic/restic).
 
-### Vaultwarden setup
-
-Vaultwarden data is already setup to be backed up using backrest. But we still need to setup daily database backup because the the DB might be
-in use when backrest is backing it up. Add the `crons/vaultwarden-backup.sh` script to root's cron to run daily which does this.
-
-```
-3 2 * * * /home/ubuntu/selfhosted-vps/crons/vaultwarden-backup.sh || curl -X POST -F "body=Vaultwarden DB backup failed!" http://127.0.0.1:8000/notify/apprise
-```
-
 ### Grafana setup
 
 - Generate a random password with more than 60 characters. Set it in the `.env` file in the variable `GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET`.
 - Generate argon2 hash using Authelia docker image `docker run --rm -it authelia/authelia:latest authelia crypto hash generate argon2`. Put the hash in the file `/var/lib/docker-data/authelia/secrets/oidc/grafana_client_secret.txt`
 
 ### Paperless-ngx setup
-
-Add the `crons/paperless-backup.sh` script to root's cron to run daily.
-
-```
-5 2 * * * /home/ubuntu/selfhosted-vps/crons/paperless-backup.sh || curl -X POST -F "body=Paperless-ngx DB backup failed!" http://127.0.0.1:8000/notify/apprise
-```
 
 #### Restoring backup
 

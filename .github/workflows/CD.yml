@@ -41,13 +41,11 @@ jobs:
           echo "      ansible_host: ${{ secrets.VPS_HOST }}" >> inventory.yml
         shell: bash
 
-      # Load the SSH private key and its password into the ssh-agent
-      # This allows Ansible to authenticate with your VPS.
+      # Load the SSH private key into the ssh-agent
       - name: Load SSH Key
         uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.ANSIBLE_SSH_KEY }}
-          ssh-private-key-password: ${{ secrets.ANSIBLE_KEY_PASSWORD }}
 
       # Run the Ansible playbook
       - name: Run Ansible Playbook

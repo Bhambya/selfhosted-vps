@@ -1,0 +1,64 @@
+# This workflow deploys an Ansible playbook to a VPS.
+# It triggers on any push to the 'main' branch.
+
+name: Ansible Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy Ansible Playbook
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Ansible
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible
+
+      - name: Prepare control node
+        run: |
+          ansible-playbook ansible/playbooks/prepare_control_node.yml
+
+      # Create the inventory.yml file dynamically from the VPS_HOST secret
+      - name: Create inventory file
+        run: |
+          echo "all:" > inventory.yml
+          echo "  hosts:" >> inventory.yml
+          echo "    vps:" >> inventory.yml
+          echo "      ansible_user: ubuntu" >> inventory.yml
+          echo "      ansible_host: ${{ secrets.VPS_HOST }}" >> inventory.yml
+        shell: bash
+
+      # Load the SSH private key and its password into the ssh-agent
+      # This allows Ansible to authenticate with your VPS.
+      - name: Load SSH Key
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.ANSIBLE_SSH_KEY }}
+          ssh-private-key-password: ${{ secrets.ANSIBLE_KEY_PASSWORD }}
+
+      # Run the Ansible playbook
+      - name: Run Ansible Playbook
+        env:
+          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
+          # Disable host key checking for CI environment
+          ANSIBLE_HOST_KEY_CHECKING: 'false'
+        run: |
+          # Pipe the become password from secrets to the ansible-playbook command
+          # The --ask-become-pass flag tells Ansible to read the password from stdin
+          echo "${{ secrets.ANSIBLE_BECOME_PASSWORD }}" | ansible-playbook \
+            -i inventory.yml \
+            ansible/playbooks/deploy_docker.yml \
+            --ask-become-pass

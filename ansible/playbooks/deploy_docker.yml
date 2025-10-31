@@ -1,6 +1,6 @@
 ---
 - name: Deploy docker containers
-  hosts: myhosts
+  hosts: all
   vars:
     repo_path: "/home/{{ ansible_user }}/selfhosted-vps"
     secrets_mapping_file: "{{ repo_path }}/ansible/secret-mappings.yml"

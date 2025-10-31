@@ -1,13 +1,13 @@
-name: Ansible Deployment
+name: Weekly host maintenance
 
 on:
-  push:
-    branches:
-      - main
+  schedule:
+    - cron: "0 5 * * 2" # At 05:00, only on Tuesday
+  workflow_dispatch: {}
 
 jobs:
   deploy:
-    name: Deploy Ansible Playbook
+    name: Weekly host maintenance
     runs-on: ubuntu-latest
     concurrency:
       group: host_management
@@ -48,9 +48,9 @@ jobs:
           # Disable host key checking for CI environment
           ANSIBLE_HOST_KEY_CHECKING: 'false'
         run: |
-          # Pipe the become password from secrets to the ansible-playbook command
-          # The --ask-become-pass flag tells Ansible to read the password from stdin
-          echo "${{ secrets.ANSIBLE_BECOME_PASSWORD }}" | ansible-playbook \
-            -i inventory.yml \
-            ansible/playbooks/deploy_docker.yml \
-            --ask-become-pass
+          echo "Running all playbooks in ansible/playbooks/weekly..."
+          for playbook in ansible/playbooks/weekly/*.yml; do
+            echo "Running $playbook..."
+            echo "${{ secrets.ANSIBLE_BECOME_PASSWORD }}" | ansible-playbook -i inventory.yml "$playbook" \
+              --ask-become-pass
+          done

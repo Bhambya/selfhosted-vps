@@ -1,0 +1,17 @@
+---
+- name: Weekly System Update
+  hosts: all
+  become: true
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Upgrade all packages
+      ansible.builtin.apt:
+        upgrade: true
+
+    - name: Remove unnecessary packages
+      ansible.builtin.apt:
+        autoremove: true
+        purge: true

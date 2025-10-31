@@ -7,17 +7,6 @@
   environment:
     PATH: "~/.local/bin:{{ lookup('env', 'PATH') }}"
   tasks:
-    - name: Update repositories cache
-      become: true
-      ansible.builtin.apt:
-        update_cache: true
-
-    - name: Install required packages
-      become: true
-      ansible.builtin.apt:
-        pkg:
-          - git
-
     - name: Ensure repo is in clean state
       ansible.builtin.git:
         repo: 'https://github.com/Bhambya/selfhosted-vps.git'

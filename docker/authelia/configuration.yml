@@ -11,7 +11,7 @@ identity_validation:
     require_second_factor: true
   reset_password:
     jwt_lifespan: '5 minutes'
-    jwt_secret: {{ secret "/secrets/jwt_secret.txt" | mindent 0 "|" | msquote }}
+    jwt_secret: {{ mustEnv "CUSTOM_AUTHELIA_JWT_SECRET" | mindent 0 "|" | msquote }}
 
 totp:
   disable: false
@@ -29,7 +29,7 @@ authentication_backend:
     implementation: 'lldap'
     address: 'ldap://lldap:3890'
     # base_dn and user are set through env variables
-    password: {{ secret "/secrets/ldap_password.txt" | msquote }}
+    password: {{ mustEnv "CUSTOM_AUTHELIA_LDAP_PASSWORD" | msquote }}
 
 access_control:
   default_policy: 'deny'
@@ -74,7 +74,7 @@ access_control:
 
 session:
   name: 'authelia_session'
-  secret: {{ secret "/secrets/session_secret.txt" | mindent 0 "|" | msquote }}
+  secret: {{ mustEnv "CUSTOM_AUTHELIA_SESSION_SECRET" | mindent 0 "|" | msquote }}
   inactivity: '5h'
   expiration: '10h'
   remember_me: '20d'
@@ -98,14 +98,14 @@ regulation:
   ban_time: '2h'
 
 storage:
-  encryption_key: {{ secret "/secrets/storage_encryption_key.txt" | mindent 0 "|" | msquote }}
+  encryption_key: {{ mustEnv "CUSTOM_AUTHELIA_STORAGE_ENCRYPTION_KEY" | mindent 0 "|" | msquote }}
   local:
     path: '/config/db.sqlite3'
 
 notifier:
   disable_startup_check: false
   smtp:
-    password: {{ secret "/secrets/smtp_password.txt" | mindent 0 "|" | msquote }}
+    password: {{ mustEnv "CUSTOM_AUTHELIA_SMTP_PASSWORD" | mindent 0 "|" | msquote }}
 
 definitions:
   user_attributes:
@@ -115,7 +115,7 @@ definitions:
 identity_providers:
   oidc:
     ## See: https://www.authelia.com/c/oidc
-    hmac_secret: {{ secret "/secrets/oidc/hmac_secret.txt" | msquote }}
+    hmac_secret: {{ mustEnv "CUSTOM_AUTHELIA_OIDC_HMAC_SECRET" | msquote }}
     jwks:
       - algorithm: 'RS256'
         use: 'sig'

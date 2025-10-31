@@ -33,6 +33,7 @@ jobs:
           echo "    vps:" >> inventory.yml
           echo "      ansible_user: ubuntu" >> inventory.yml
           echo "      ansible_host: ${{ secrets.VPS_HOST }}" >> inventory.yml
+          echo "      ansible_become_pass: ${{ secrets.ANSIBLE_BECOME_PASSWORD }}" >> inventory.yml
         shell: bash
 
       # Load the SSH private key into the ssh-agent
@@ -50,6 +51,9 @@ jobs:
           echo "Running all playbooks in ansible/playbooks/weekly..."
           for playbook in ansible/playbooks/weekly/*.yml; do
             echo "Running $playbook..."
-            echo "${{ secrets.ANSIBLE_BECOME_PASSWORD }}" | ansible-playbook -i inventory.yml "$playbook" \
-              --ask-become-pass
+            ansible-playbook -i inventory.yml "$playbook"
           done
+
+      - name: Remove inventory file
+        run: rm inventory.yml
+        shell: bash

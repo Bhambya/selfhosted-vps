@@ -1,5 +1,7 @@
 - name: Lookup secret on the control node
   ansible.builtin.shell: "set -o pipefail && bws secret get {{ item['secret'] }} | jq -r '.value'"
+  args:
+    executable: /bin/bash
   register: write_secret_file_bw_secret_output
   changed_when: false
   failed_when: write_secret_file_bw_secret_output.rc != 0

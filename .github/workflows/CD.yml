@@ -12,6 +12,8 @@ jobs:
   deploy:
     name: Deploy Ansible Playbook
     runs-on: ubuntu-latest
+    concurrency:
+      group: host_management
 
     steps:
       - name: Check out repository

@@ -45,8 +45,7 @@ jobs:
       - name: Run Ansible Playbook
         env:
           BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
-          # Disable host key checking for CI environment
-          ANSIBLE_HOST_KEY_CHECKING: 'false'
+          ANSIBLE_CONFIG: ansible/ansible.cfg
         run: |
           echo "Running all playbooks in ansible/playbooks/weekly..."
           for playbook in ansible/playbooks/weekly/*.yml; do

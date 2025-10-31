@@ -45,8 +45,7 @@ jobs:
       - name: Run Ansible Playbook
         env:
           BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
-          # Disable host key checking for CI environment
-          ANSIBLE_HOST_KEY_CHECKING: 'false'
+          ANSIBLE_CONFIG: ansible/ansible.cfg
         run: |
           # Pipe the become password from secrets to the ansible-playbook command
           # The --ask-become-pass flag tells Ansible to read the password from stdin

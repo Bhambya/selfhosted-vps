@@ -273,6 +273,7 @@ identity_providers:
         redirect_uris:
           - 'https://px-home.{{ mustEnv "BASE_DOMAIN" }}'
           - 'https://proxmox.home.{{ mustEnv "BASE_DOMAIN" }}'
+          - 'https://proxmox:8006'
         scopes:
           - 'openid'
           - 'profile'

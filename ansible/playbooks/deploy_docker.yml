@@ -1,0 +1,72 @@
+---
+- name: Deploy docker containers
+  hosts: myhosts
+  vars:
+    repo_path: "/home/{{ ansible_user }}/selfhosted-vps"
+    secrets_mapping_file: "{{ repo_path }}/ansible/secret-mappings.yml"
+  environment:
+    PATH: "~/.local/bin:{{ lookup('env', 'PATH') }}"
+  tasks:
+    - name: Update repositories cache
+      become: true
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install required packages
+      become: true
+      ansible.builtin.apt:
+        pkg:
+          - git
+
+    - name: Ensure repo is in clean state
+      ansible.builtin.git:
+        repo: 'https://github.com/Bhambya/selfhosted-vps.git'
+        dest: "{{ repo_path }}"
+        version: 'main'
+        update: true
+        force: false
+
+    - name: Read secret mapping
+      ansible.builtin.slurp:
+        src: "{{ secrets_mapping_file }}"
+      register: secret_mapping_content
+
+    - name: Parse secret mapping
+      ansible.builtin.set_fact:
+        secret_mapping: "{{ secret_mapping_content['content'] | b64decode | from_yaml }}"
+
+    - name: Set env_files
+      ansible.builtin.set_fact:
+        env_files: "{{ secret_mapping['env_files'] | default({}) }}"
+
+    - name: Loop over env_files
+      ansible.builtin.include_role:
+        name: write_env_file
+      loop: "{{ env_files }}"
+      loop_control:
+        loop_var: env_file
+    
+    - name: Loop over secret_files
+      ansible.builtin.include_role:
+        name: write_secret_file
+      loop: "{{ secret_mapping['secret_files'] | default({}) }}"
+      loop_control:
+        loop_var: item
+
+    - name: Restart services using Docker Compose
+      become: true
+      community.docker.docker_compose_v2:
+        project_src: "{{ repo_path }}/docker"
+        state: present
+        remove_orphans: true
+
+    - name: Run Docker Command
+      become: true
+      command: docker compose ps
+      args:
+        chdir: "{{ repo_path }}/docker"
+      register: docker_output
+
+    - name: Display Docker Output
+      debug:
+        var: docker_output.stdout_lines

@@ -165,8 +165,8 @@ identity_providers:
           - immich_role
     clients:
       - client_name: 'immich'
-        client_id: {{ secret "/secrets/oidc/immich/client_id.txt" | msquote }}
-        client_secret: {{ secret "/secrets/oidc/immich/client_secret_hash.txt" | msquote }}
+        client_id: {{ mustEnv "CUSTOM_AUTHELIA_OIDC_IMMICH_CLIENT_ID" | msquote }}
+        client_secret: {{ mustEnv "CUSTOM_AUTHELIA_OIDC_IMMICH_CLIENT_SECRET_HASH" | msquote }}
         public: false
         authorization_policy: 'immich_access'
         id_token_signed_response_alg: 'RS256'
@@ -185,8 +185,8 @@ identity_providers:
           - 'email'
           - 'immich'
       - client_name: 'Grafana'
-        client_id:  {{ secret "/secrets/oidc/grafana/client_id.txt" | msquote }}
-        client_secret: {{ secret "/secrets/oidc/grafana/client_secret_hash.txt" | msquote }}
+        client_id: {{ mustEnv "CUSTOM_AUTHELIA_OIDC_GRAFANA_CLIENT_ID" | msquote }}
+        client_secret: {{ mustEnv "CUSTOM_AUTHELIA_OIDC_GRAFANA_CLIENT_SECRET_HASH" | msquote }}
         public: false
         authorization_policy: 'two_factor'
         require_pkce: true
@@ -201,8 +201,8 @@ identity_providers:
         userinfo_signed_response_alg: 'none'
         token_endpoint_auth_method: 'client_secret_basic'
       - client_name: 'jellyfin'
-        client_id: {{ secret "/secrets/oidc/jellyfin/client_id.txt" | msquote }}
-        client_secret: {{ secret "/secrets/oidc/jellyfin/client_secret_hash.txt" | msquote }}
+        client_id: {{ mustEnv "CUSTOM_AUTHELIA_OIDC_JELLYFIN_CLIENT_ID" | msquote }}
+        client_secret: {{ mustEnv "CUSTOM_AUTHELIA_OIDC_JELLYFIN_CLIENT_SECRET_HASH" | msquote }}
         public: false
         require_pkce: true
         pkce_challenge_method: 'S256'
@@ -239,8 +239,8 @@ identity_providers:
           - https://linkwarden.{{ mustEnv "BASE_DOMAIN" }}/api/v1/auth/callback/authelia
         userinfo_signed_response_alg: none
       - client_name: 'opkssh'
-        client_id: {{ secret "/secrets/oidc/opkssh/client_id.txt" | msquote }}
-        client_secret: {{ secret "/secrets/oidc/opkssh/client_secret_hash.txt" | msquote }} 
+        client_id: {{ mustEnv "CUSTOM_AUTHELIA_OIDC_OPKSSH_CLIENT_ID" | msquote }}
+        client_secret: {{ mustEnv "CUSTOM_AUTHELIA_OIDC_OPKSSH_CLIENT_SECRET_HASH" | msquote }}
         public: false
         authorization_policy: 'two_factor'
         require_pkce: true
@@ -264,8 +264,8 @@ identity_providers:
         access_token_signed_response_alg: 'RS256'
         token_endpoint_auth_method: 'client_secret_post'
       - client_name: 'proxmox'
-        client_id: {{ secret "/secrets/oidc/proxmox/client_id.txt" | msquote }}
-        client_secret: {{ secret "/secrets/oidc/proxmox/client_secret_hash.txt" | msquote }} 
+        client_id: {{ mustEnv "CUSTOM_AUTHELIA_OIDC_PROXMOX_CLIENT_ID" | msquote }}
+        client_secret: {{ mustEnv "CUSTOM_AUTHELIA_OIDC_PROXMOX_CLIENT_SECRET_HASH" | msquote }}
         public: false
         authorization_policy: 'proxmox_access'
         require_pkce: true

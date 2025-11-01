@@ -63,7 +63,7 @@
     - name: Write cron file
       become: true
       vars:
-        cron_files: "{{ q('fileglob', '/crons/*') }}"
+        cron_files: "{{ q('fileglob', local_repo_path + '/crons/*') }}"
       ansible.builtin.copy:
         dest: "/etc/cron.d/selfhosted"
         content: |

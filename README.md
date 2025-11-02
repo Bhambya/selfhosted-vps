@@ -92,7 +92,7 @@ docker compose up -d
 
 ### Install crons
 
-Run `sudo ./install_crons.sh` to install some DB backup and crowdsec hub update scripts to the crontab.
+The scripts in the `crons` directory should be installed. The Github workflow `CD.yml` already does this.
 
 ### Wireguard setup
 

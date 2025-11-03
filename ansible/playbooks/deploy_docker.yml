@@ -51,7 +51,7 @@
 
     - name: Run Docker Command
       become: true
-      command: docker compose ps --format "table {{.Names}}\t{{.Created}}\t{{.Status}}"
+      command: {% raw %}docker compose ps --format "table {{.Names}}\t{{.Created}}\t{{.Status}}"{% endraw %}
       args:
         chdir: "{{ repo_path }}/docker"
       register: docker_output
@@ -61,10 +61,10 @@
         var: docker_output.stdout_lines
 
     - name: Get cron files on remote machine
-      find:
+      ansible.builtin.find:
         paths: "{{ repo_path + '/crons' }}"
       register: cron_files_find_result
-      
+
     - name: Write cron file
       become: true
       ansible.builtin.copy:

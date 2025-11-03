@@ -51,7 +51,7 @@
 
     - name: Run Docker Command
       become: true
-      command: "docker compose ps --format 'table {% raw %}{{.Names}}\t{{.Created}}\t{{.Status}}'{% endraw %}"
+      command: "docker compose ps --format 'table {% raw %}{{.Names}}\t{{.RunningFor}}\t{{.Status}}'{% endraw %}"
       args:
         chdir: "{{ repo_path }}/docker"
       register: docker_output

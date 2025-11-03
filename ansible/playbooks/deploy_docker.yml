@@ -51,7 +51,7 @@
 
     - name: Run Docker Command
       become: true
-      command: docker compose ps
+      command: docker compose ps --format "table {{.Names}}\t{{.Created}}\t{{.Status}}"
       args:
         chdir: "{{ repo_path }}/docker"
       register: docker_output

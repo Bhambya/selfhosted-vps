@@ -1,6 +1,6 @@
 # 1. Specify the platform and base image.
 # We use eclipse-temurin JRE 21 (required by cache node >= 19.0) on Alpine Linux for arm64.
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21.0.8_9-jre-alpine
 
 # 2. Set Arguments for the download
 # This makes it easy to update the version in one place.

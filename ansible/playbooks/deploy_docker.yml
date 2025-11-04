@@ -31,7 +31,7 @@
         state: directory
         mode: "700"
       loop:
-        - gradle-build-cache-node
+        - gradle-build-cache-node/conf
 
     - name: Set env_files
       ansible.builtin.set_fact:

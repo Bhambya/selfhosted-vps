@@ -4,6 +4,7 @@
   vars:
     repo_path: "/home/{{ ansible_user }}/selfhosted-vps"
     secrets_mapping_file: "{{ repo_path }}/ansible/secret-mappings.yml"
+    github_workdir: "{{ lookup('ansible.builtin.env', 'GITHUB_WORKSPACE') }}"
   environment:
     PATH: "~/.local/bin:{{ lookup('env', 'PATH') }}"
   tasks:
@@ -24,6 +25,14 @@
       ansible.builtin.set_fact:
         secret_mapping: "{{ secret_mapping_content['content'] | b64decode | from_yaml }}"
 
+    - name: Create docker-data directories
+      ansible.builtin.file:
+        path: "/var/lib/docker-data/{{ item }}"
+        state: directory
+        mode: "700"
+      loop:
+        - gradle-build-cache-node
+
     - name: Set env_files
       ansible.builtin.set_fact:
         env_files: "{{ secret_mapping['env_files'] | default({}) }}"
@@ -41,6 +50,18 @@
       loop: "{{ secret_mapping['secret_files'] | default({}) }}"
       loop_control:
         loop_var: item
+
+    - name: Render templates
+      ansible.builtin.template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "{{ item.mode }}"
+      notify: Restart {{ item.container }}
+      loop:
+        - src: "{{ github_workdir }}/docker/gradle-build-cache-node/config.yaml.j2"
+          dest: /var/lib/docker-data/gradle-build-cache-node/conf/config.yaml
+          container: gradle-build-cache-node
+          mode: "0640"
 
     - name: Restart services using Docker Compose
       become: true
@@ -79,3 +100,10 @@
           0 * * * * root {{ item.path }} || curl -X POST -F "body=Cron index {{ loop.index0 }} failed!" http://127.0.0.1:8000/notify/apprise
           {% endfor %}
         mode: "0644"
+
+  handlers:
+    - name: Restart gradle-build-cache-node
+      community.docker.docker_compose_v2:
+        project_src: "{{ repo_path }}/docker"
+        services: gradle-build-cache-node
+        state: restarted

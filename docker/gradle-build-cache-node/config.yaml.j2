@@ -1,0 +1,10 @@
+version: 5
+uiAccess:
+  type: "disabled"
+cache:
+  accessControl:
+    users:
+      {{ lookup('bitwarden.secrets.lookup', '5e05c3d5-acaf-4a4b-9788-b38a01637e21') }}:
+        password: "{{ lookup('bitwarden.secrets.lookup', 'f7db77a3-cc49-41ff-8718-b38a0163d1d6') }}"
+        level: "readwrite"
+        note: "Continuous Integration User"

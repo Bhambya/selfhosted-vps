@@ -658,6 +658,23 @@ services:
     volumes:
       - "/var/lib/docker-data/github-release-monitor:/app/data"
 
+  gradle-build-cache-node:
+    container_name: gradle-build-cache-node
+    restart: unless-stopped
+    user: $UID
+    build:
+      context: ./gradle-build-cache-node
+      dockerfile: ./Dockerfile
+    networks:
+      - proxy
+    volumes:
+      - /var/lib/docker-data/gradle-build-cache-node/:/data
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.gradle-build-cache.rule: "Host(`gradle-build-cache.${BASE_DOMAIN}`)"
+      traefik.http.services.gradle-build-cache.loadbalancer.server.port: "5071"
+      traefik.http.routers.gradle-build-cache.tls: "true"
+
 volumes:
   crowdsec-db:
     name: crowdsec-db
@@ -670,6 +687,7 @@ volumes:
     name: "filebrowser_data"
   whatsapp_volume:
     name: "whatsapp_volume"
+  gradle_cache:
 
 networks:
   proxy:

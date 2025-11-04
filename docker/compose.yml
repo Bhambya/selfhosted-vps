@@ -74,6 +74,7 @@ services:
       traefik.enable: "true"
       traefik.docker.network: "authelia"
       traefik.http.routers.authelia.rule: "Host(`auth.${BASE_DOMAIN}`)"
+      traefik.http.routers.authelia.tls: "true"
       traefik.http.middlewares.authelia.forwardAuth.address: "http://authelia:9091/api/authz/forward-auth"
       traefik.http.middlewares.authelia.forwardAuth.trustForwardHeader: "true"
       traefik.http.middlewares.authelia.forwardAuth.authResponseHeaders: "Remote-User,Remote-Groups,Remote-Name,Remote-Email"
@@ -153,6 +154,7 @@ services:
       - /var/log/traefik/:/var/log/traefik/:ro
       - /var/log/vaultwarden/:/var/log/vaultwarden/:ro
       - /var/log/auth.log:/var/log/auth.log:ro
+      - ./crowdsec/gradle-cache-node-whitelist.yaml:/etc/crowdsec/parsers/s02-enrich/gradle-cache-node-whitelist.yaml:ro # gradle build cache whitelist rules
       - ./crowdsec/immich-whitelist.yaml:/etc/crowdsec/parsers/s02-enrich/immich-whitelist.yaml:ro # immich whitelist rules
       - ./crowdsec/grafana-whitelist.yaml:/etc/crowdsec/parsers/s02-enrich/grafana-whitelist.yaml:ro # grafana whitelist rules
     networks:

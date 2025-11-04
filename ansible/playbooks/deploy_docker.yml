@@ -103,6 +103,7 @@
 
   handlers:
     - name: Restart gradle-build-cache-node
+      become: true
       community.docker.docker_compose_v2:
         project_src: "{{ repo_path }}/docker"
         services: gradle-build-cache-node

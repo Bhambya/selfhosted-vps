@@ -105,6 +105,11 @@ services:
       CF_API_EMAIL: ${CF_API_EMAIL}
       CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
       BASE_DOMAIN: ${BASE_DOMAIN}
+    command:
+      - "--entrypoints.https.http.tls.certResolver=cloudflare"
+      - "--entrypoints.https.http.tls.domains[0].main=${BASE_DOMAIN}"
+      - "--entrypoints.https.http.tls.domains[0].sans=*.${BASE_DOMAIN}"
+      - "--certificatesResolvers.cloudflare.acme.email=${CF_API_EMAIL}"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./traefik/config/traefik.yml:/traefik.yml:ro"

@@ -69,12 +69,6 @@ entryPoints:
         - cf-ipallowlist@file
         - authelia@docker
         - my-robots-txt@file
-      tls:
-        certResolver: "cloudflare"
-        domains:
-          - main: '{{ env "BASE_DOMAIN" }}'
-            sans:
-              - '*.{{ env "BASE_DOMAIN" }}'
 
 serversTransport:
   insecureSkipVerify: true
@@ -90,7 +84,6 @@ providers:
 certificatesResolvers:
   cloudflare:
     acme:
-      email: '{{ env "CF_API_EMAIL" }}'
       storage: "/data/acme.json"
       dnsChallenge:
         provider: cloudflare

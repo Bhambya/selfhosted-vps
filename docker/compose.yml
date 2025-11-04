@@ -141,6 +141,8 @@ services:
       TZ: ${TIME_ZONE}
       GID: "${GID-1000}"
       COLLECTIONS: "crowdsecurity/linux crowdsecurity/traefik crowdsecurity/sshd LePresidente/authelia Dominic-Wagner/vaultwarden"
+      BOUNCER_KEY_traefik-bouncer: "${CROWDSEC_TRAEFIK_BOUNCER_API_KEY}"
+      BOUNCER_KEY_bouncer-firewall: "${CROWDSEC_FIREWALL_BOUNCER_API_KEY}"
     ports:
       - "127.0.0.1:9310:8080" # exposed for crowdsec-firewall-bouncer
     depends_on:
@@ -172,7 +174,7 @@ services:
     environment:
       TZ: ${TIME_ZONE}
       CROWDSEC_AGENT_HOST: "crowdsec:8080"
-      CROWDSEC_BOUNCER_API_KEY: ${CROWDSEC_BOUNCER_API_KEY}
+      CROWDSEC_BOUNCER_API_KEY: ${CROWDSEC_TRAEFIK_BOUNCER_API_KEY}
 
   wireguard:
     image: "lscr.io/linuxserver/wireguard:1.0.20250521"

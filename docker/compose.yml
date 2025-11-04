@@ -154,7 +154,6 @@ services:
       - /var/log/traefik/:/var/log/traefik/:ro
       - /var/log/vaultwarden/:/var/log/vaultwarden/:ro
       - /var/log/auth.log:/var/log/auth.log:ro
-      - ./crowdsec/gradle-cache-node-whitelist.yaml:/etc/crowdsec/parsers/s02-enrich/gradle-cache-node-whitelist.yaml:ro # gradle build cache whitelist rules
       - ./crowdsec/immich-whitelist.yaml:/etc/crowdsec/parsers/s02-enrich/immich-whitelist.yaml:ro # immich whitelist rules
       - ./crowdsec/grafana-whitelist.yaml:/etc/crowdsec/parsers/s02-enrich/grafana-whitelist.yaml:ro # grafana whitelist rules
     networks:
@@ -649,6 +648,7 @@ services:
   github-release-monitor:
     container_name: "github-release-monitor"
     image: "ghcr.io/iamspido/github-release-monitor:1.3.0"
+    user: $UID
     labels:
       traefik.enable: "true"
       traefik.http.routers.github-release-monitor.rule: "Host(`github-release-monitor.${BASE_DOMAIN}`)"
@@ -664,23 +664,6 @@ services:
       - APPRISE_URL=http://apprise:8000/notify/apprise
     volumes:
       - "/var/lib/docker-data/github-release-monitor:/app/data"
-
-  gradle-build-cache-node:
-    container_name: gradle-build-cache-node
-    restart: unless-stopped
-    user: $UID
-    build:
-      context: ./gradle-build-cache-node
-      dockerfile: ./Dockerfile
-    networks:
-      - proxy
-    volumes:
-      - /var/lib/docker-data/gradle-build-cache-node/:/data
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.gradle-build-cache.rule: "Host(`gradle-build-cache.${BASE_DOMAIN}`)"
-      traefik.http.services.gradle-build-cache.loadbalancer.server.port: "5071"
-      traefik.http.routers.gradle-build-cache.tls: "true"
 
 volumes:
   crowdsec-db:

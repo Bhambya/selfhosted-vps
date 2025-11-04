@@ -1,7 +1,0 @@
-name: crowdsecurity/gradle-cache-node-whitelists
-description: "Whitelist Gradle build cache 404"
-filter: "evt.Meta.service == 'http' && evt.Meta.log_type in ['http_access-log', 'http_error-log']"
-whitelist:
-  reason: "Whitelist Gradle build cache 404"
-  expression:
-   - evt.Parsed.traefik_router_name contains 'gradle-build-cache' && evt.Meta.http_verb == 'GET' && evt.Parsed.request matches '/cache/' && evt.Meta.http_status == '404'

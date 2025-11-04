@@ -45,7 +45,6 @@ access_control:
         - 'readeck.{{ mustEnv "BASE_DOMAIN" }}'
         - 'filebrowser-vps.{{ mustEnv "BASE_DOMAIN" }}'
         - 'ldap.{{ mustEnv "BASE_DOMAIN" }}'
-        - 'gradle-build-cache.{{ mustEnv "BASE_DOMAIN" }}'
       policy: 'bypass' # these have their own auth
     - domain: 
         - 'traefik-dashboard.{{ mustEnv "BASE_DOMAIN" }}'

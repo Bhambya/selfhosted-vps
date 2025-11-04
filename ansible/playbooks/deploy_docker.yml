@@ -29,9 +29,9 @@
       ansible.builtin.file:
         path: "/var/lib/docker-data/{{ item }}"
         state: directory
-        mode: "700"
+        mode: "750"
       loop:
-        - gradle-build-cache-node/conf
+        - github-release-monitor
 
     - name: Set env_files
       ansible.builtin.set_fact:
@@ -51,17 +51,18 @@
       loop_control:
         loop_var: item
 
-    - name: Render templates
-      ansible.builtin.template:
-        src: "{{ item.src }}"
-        dest: "{{ item.dest }}"
-        mode: "{{ item.mode }}"
-      notify: Restart {{ item.container }}
-      loop:
-        - src: "{{ github_workdir }}/docker/gradle-build-cache-node/config.yaml.j2"
-          dest: /var/lib/docker-data/gradle-build-cache-node/conf/config.yaml
-          container: gradle-build-cache-node
-          mode: "0640"
+    # TODO: use for backrest
+    # - name: Render templates
+    #   ansible.builtin.template:
+    #     src: "{{ item.src }}"
+    #     dest: "{{ item.dest }}"
+    #     mode: "{{ item.mode }}"
+    #   notify: Restart {{ item.container }}
+    #   loop:
+    #     - src: "{{ github_workdir }}/docker/gradle-build-cache-node/config.yaml.j2"
+    #       dest: /var/lib/docker-data/gradle-build-cache-node/conf/config.yaml
+    #       container: gradle-build-cache-node
+    #       mode: "0640"
 
     - name: Restart services using Docker Compose
       become: true
@@ -100,11 +101,3 @@
           0 * * * * root {{ item.path }} || curl -X POST -F "body=Cron index {{ loop.index0 }} failed!" http://127.0.0.1:8000/notify/apprise
           {% endfor %}
         mode: "0644"
-
-  handlers:
-    - name: Restart gradle-build-cache-node
-      become: true
-      community.docker.docker_compose_v2:
-        project_src: "{{ repo_path }}/docker"
-        services: gradle-build-cache-node
-        state: restarted

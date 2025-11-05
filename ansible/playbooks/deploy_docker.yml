@@ -70,6 +70,8 @@
         project_src: "{{ repo_path }}/docker"
         state: present
         remove_orphans: true
+        wait: true
+        wait_timeout: 300
 
     - name: Run Docker Command
       become: true

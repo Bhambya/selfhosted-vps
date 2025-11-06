@@ -32,6 +32,7 @@
         mode: "750"
       loop:
         - github-release-monitor
+        - filebrowser
 
     - name: Set env_files
       ansible.builtin.set_fact:

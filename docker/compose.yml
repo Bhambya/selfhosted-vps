@@ -17,6 +17,8 @@ services:
       - "/var/lib/docker-data/lldap:/data"
     environment:
       - TZ=$TIME_ZONE
+      - UID=$UID
+      - GID=$GID
       - LLDAP_JWT_SECRET=$LLDAP_JWT_SECRET
       - LLDAP_KEY_SEED=$LLDAP_KEY_SEED
       - LLDAP_LDAP_BASE_DN=$LLDAP_LDAP_BASE_DN
@@ -127,6 +129,7 @@ services:
     image: "traefik/whoami:v1.11"
     restart: "unless-stopped"
     container_name: "whoami"
+    user: $UID
     labels:
       traefik.enable: "true"
       traefik.http.routers.whoami-secure.rule: "Host(`whoami.${BASE_DOMAIN}`)"
@@ -139,7 +142,7 @@ services:
     container_name: crowdsec
     environment:
       TZ: ${TIME_ZONE}
-      GID: "${GID-1000}"
+      GID: "$GID"
       COLLECTIONS: "crowdsecurity/linux crowdsecurity/traefik crowdsecurity/sshd LePresidente/authelia Dominic-Wagner/vaultwarden"
       BOUNCER_KEY_traefik-bouncer: "${CROWDSEC_TRAEFIK_BOUNCER_API_KEY}"
       BOUNCER_KEY_bouncer-firewall: "${CROWDSEC_FIREWALL_BOUNCER_API_KEY}"
@@ -166,6 +169,7 @@ services:
   bouncer-traefik:
     image: "docker.io/fbonalair/traefik-crowdsec-bouncer:0.5.0"
     container_name: bouncer-traefik
+    user: $UID
     networks:
       - proxy # same network as traefik + crowdsec
     depends_on:
@@ -254,11 +258,11 @@ services:
     container_name: "stirling-pdf"
     image: "stirlingtools/stirling-pdf:1.5.0"
     volumes:
-      - ./stirling-pdf/trainingData:/usr/share/tessdata # Required for extra OCR languages
-      - ./stirling-pdf/extraConfigs:/configs
-      - ./stirling-pdf/customFiles:/customFiles/
-      - ./stirling-pdf/logs:/logs/
-      - ./stirling-pdf/pipeline:/pipeline/
+      - /var/lib/docker-data/stirling-pdf/trainingData:/usr/share/tessdata # Required for extra OCR languages
+      - /var/lib/docker-data/stirling-pdf/extraConfigs:/configs
+      - /var/lib/docker-data/stirling-pdf/customFiles:/customFiles/
+      - /var/lib/docker-data/stirling-pdf/logs:/logs/
+      - /var/lib/docker-data/stirling-pdf/pipeline:/pipeline/
     deploy:
       resources:
         limits:
@@ -431,6 +435,7 @@ services:
   gotenberg:
     image: "docker.io/gotenberg/gotenberg:8.24.0"
     container_name: gotenberg
+    user: $UID
     restart: unless-stopped
     networks:
       paperless:
@@ -445,6 +450,7 @@ services:
   tika:
     image: "docker.io/apache/tika:3.2.3.0"
     container_name: tika
+    user: $UID
     networks:
       paperless:
     restart: unless-stopped
@@ -631,14 +637,14 @@ services:
     container_name: "filebrowser"
     image: "gtstef/filebrowser:1.0.1-beta"
     restart: "unless-stopped"
-    user: $USER
+    user: $UID
     environment:
       FILEBROWSER_CONFIG: "/config/config.yaml"
       FILEBROWSER_ADMIN_PASSWORD: $FILEBROWSER_ADMIN_PASSWORD
     networks:
       proxy:
     volumes:
-      - "filebrowser_data:/home/filebrowser/data"
+      - "/var/lib/docker-data/filebrowser:/home/filebrowser/data"
       - "./filebrowser/config:/config"
       - "$FILEBROWSER_SRV_PATH:/srv"
     labels:
@@ -675,8 +681,6 @@ volumes:
   redis-authelia-cache:
   redis-paperless-cache:
   prom_data:
-  filebrowser_data:
-    name: "filebrowser_data"
   whatsapp_volume:
     name: "whatsapp_volume"
   gradle_cache:

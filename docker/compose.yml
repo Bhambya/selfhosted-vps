@@ -483,7 +483,7 @@ services:
       traefik.http.routers.paperless.tls: "true"
 
   cadvisor:
-    image: "gcr.io/cadvisor/cadvisor:v0.52.1"
+    image: "ghcr.io/google/cadvisor:v0.53.0"
     devices:
       - /dev/kmsg
     privileged: true

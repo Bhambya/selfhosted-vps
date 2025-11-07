@@ -95,7 +95,6 @@ services:
     security_opt:
       - "no-new-privileges:true"
     networks:
-      wireguard:
       proxy:
       authelia:
       prometheus:
@@ -179,36 +178,6 @@ services:
       TZ: ${TIME_ZONE}
       CROWDSEC_AGENT_HOST: "crowdsec:8080"
       CROWDSEC_BOUNCER_API_KEY: ${CROWDSEC_TRAEFIK_BOUNCER_API_KEY}
-
-  wireguard:
-    image: "lscr.io/linuxserver/wireguard:1.0.20250521"
-    container_name: wireguard
-    cap_add:
-      - NET_ADMIN
-      - SYS_MODULE #optional
-    networks:
-      - wireguard
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=${TIME_ZONE}
-      - SERVERURL=${VPS_HOST}
-      - SERVERPORT=${WIREGUARD_PORT}
-      - PEERS=homeServer
-      - PEERDNS=auto
-      - INTERNAL_SUBNET=10.13.13.0/24
-      - SERVER_ALLOWEDIPS_PEER_homeServer=10.13.13.2/32
-      - PERSISTENTKEEPALIVE_PEERS=all
-      - LOG_CONFS=true
-    volumes:
-      - ./wireguard/config:/config
-    ports:
-      - ${WIREGUARD_PORT}:${WIREGUARD_PORT}/udp # wireguard port
-    sysctls:
-      - net.ipv4.conf.all.src_valid_mark=1
-    restart: unless-stopped
-    labels:
-      traefik.enable: "false"
 
   it-tools:
     image: "corentinth/it-tools:2024.10.22-7ca5933"
@@ -536,7 +505,6 @@ services:
       proxy:
       prometheus:
       paperless:
-      wireguard:
     restart: unless-stopped
     environment:
       - ALERTING_TELEGRAM_BOT_TOKEN=$ALERTING_TELEGRAM_BOT_TOKEN
@@ -690,7 +658,6 @@ networks:
     name: "proxy"
   authelia:
     name: "authelia"
-  wireguard:
   prometheus:
   paperless:
     name: "paperless"

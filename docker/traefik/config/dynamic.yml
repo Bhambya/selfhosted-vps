@@ -77,7 +77,7 @@ http:
     home:
       loadBalancer:
         servers:
-          - url: "https://wireguard:443"
+          - url: "https://10.13.13.2:443" # home server Wireguard peer IP
 
   routers:
     whoami-home:

@@ -96,18 +96,42 @@ The scripts in the `crons` directory should be installed. The Github workflow `C
 
 ### Wireguard setup
 
-After the `wireguard` docker container is created, add the following lines to the `wireguard/config/wg_confs/wg0.conf` file in the `[Interface]` section:
+Install wireguard on the VPS using `sudo apt install wireguard`
+
+Look up the default network interface using
 
 ```
-PostUp = iptables -t nat -A PREROUTING -i eth+ -p tcp --dport 80 -j DNAT --to-destination 10.13.13.2
-PostUp = iptables -t nat -A PREROUTING -i eth+ -p tcp --dport 443 -j DNAT --to-destination 10.13.13.2
-PostDown = iptables -t nat -D PREROUTING -i eth+ -p tcp --dport 80 -j DNAT --to-destination 10.13.13.2
-PostDown = iptables -t nat -D PREROUTING -i eth+ -p tcp --dport 443 -j DNAT --to-destination 10.13.13.2
+ip route list default
 ```
 
-This will forward the the ports 80 and 443 of the `wireguard` docker container to the `homeServer` peer.
+After the `wireguard` docker container is created, add the following lines to the `/etc/wireguard/wg0.conf`:
 
-Use the .conf file from the `wireguard/config/peer_homeServer` directory as the wireguard config in the home server.
+
+```
+[Interface]
+Address = 10.13.13.1
+ListenPort = 51820
+PrivateKey = <generated-private-key>
+PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o <default-network-interface> -j MASQUERADE
+PreDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o <default-network-interface> -j MASQUERADE
+
+[Peer]
+PublicKey = <generated-public-key>
+PresharedKey = <generated-preshared-key>
+AllowedIPs = 10.13.13.2/32
+PersistentKeepalive = 25
+```
+
+Also set up wireguard peer in the home server.
+
+Start wireguard
+
+```
+sudo systemctl enable wg-quick@wg0.service
+sudo systemctl start wg-quick@wg0.service
+```
+
+See also: https://www.digitalocean.com/community/tutorials/how-to-set-up-wireguard-on-ubuntu-20-04
 
 ### Crowdsec setup
 

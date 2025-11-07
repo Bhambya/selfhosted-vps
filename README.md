@@ -98,6 +98,38 @@ The scripts in the `crons` directory should be installed. The Github workflow `C
 
 Install wireguard on the VPS using `sudo apt install wireguard`
 
+#### Traffic forwarding
+Allow IPv4 forwarding so the VM
+
+```
+sudo vi /etc/sysctl.conf
+```
+If you are using IPv4 with WireGuard, add the following line at the bottom of the file:
+/etc/sysctl.conf
+
+```
+net.ipv4.ip_forward=1
+```
+
+If you are using IPv6 with WireGuard, add this line at the bottom of the file:
+/etc/sysctl.conf
+```
+net.ipv6.conf.all.forwarding=1
+```
+If you are using both IPv4 and IPv6, ensure that you include both lines. Save and close the file when you are finished.
+
+To read the file and load the new values for your current terminal session, run:
+```
+sudo sysctl -p
+```
+Output
+```
+net.ipv6.conf.all.forwarding = 1
+net.ipv4.ip_forward = 1
+```
+
+#### Wireguard config
+
 Look up the default network interface using
 
 ```

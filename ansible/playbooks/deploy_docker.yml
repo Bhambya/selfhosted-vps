@@ -52,18 +52,18 @@
       loop_control:
         loop_var: item
 
-    # TODO: use for backrest
-    # - name: Render templates
-    #   ansible.builtin.template:
-    #     src: "{{ item.src }}"
-    #     dest: "{{ item.dest }}"
-    #     mode: "{{ item.mode }}"
-    #   notify: Restart {{ item.container }}
-    #   loop:
-    #     - src: "{{ github_workdir }}/docker/gradle-build-cache-node/config.yaml.j2"
-    #       dest: /var/lib/docker-data/gradle-build-cache-node/conf/config.yaml
-    #       container: gradle-build-cache-node
-    #       mode: "0640"
+    - name: Render templates
+      become: true
+      ansible.builtin.template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "{{ item.mode }}"
+      notify: {{ item.notify }}
+      loop:
+        - src: "{{ github_workdir }}/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml.j2"
+          dest: /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml
+          notify: "Restart crowdsec-firewall-bouncer"
+          mode: "0600"
 
     - name: Restart services using Docker Compose
       become: true
@@ -104,3 +104,10 @@
           0 1 * * * root {{ item.path }} || curl -X POST -F "body=Cron {{ item.path }} failed!" http://127.0.0.1:8000/notify/apprise
           {% endfor %}
         mode: "0644"
+ 
+  handlers:
+    - name: Restart crowdsec-firewall-bouncer
+      ansible.builtin.systemd_service:
+        name: crowdsec-firewall-bouncer
+        state: restarted
+        daemon_reload: true

@@ -85,50 +85,59 @@ http:
         - "whoami-host-rewrite@file"
       rule: 'Host(`whoami-home.{{ env "BASE_DOMAIN" }}`)'
       service: home
-      tls: {}
+      tls:
+        certResolver: cloudflare
     immich-home:
       middlewares:
         - "immich-host-rewrite@file"
       rule: 'Host(`immich.{{ env "BASE_DOMAIN" }}`)'
       service: home
-      tls: {}
+      tls:
+        certResolver: cloudflare
     proxmox-home:
       middlewares:
         - "proxmox-host-rewrite@file"
       service: home
       rule: 'Host(`px-home.{{ env "BASE_DOMAIN" }}`)'
-      tls: {}
+      tls:
+        certResolver: cloudflare
     qbittorrent-home:
       middlewares:
         - "qbittorrent-host-rewrite@file"
       service: home
       rule: 'Host(`qbittorrent.{{ env "BASE_DOMAIN" }}`)'
-      tls: {}
+      tls:
+        certResolver: cloudflare
     speedtest-home:
       middlewares:
         - "speedtest-host-rewrite@file"
       service: home
       rule: 'Host(`speedtest.{{ env "BASE_DOMAIN" }}`)'
-      tls: {}
+      tls:
+        certResolver: cloudflare
     jellyfin-home:
       service: home
       rule: 'Host(`jellyfin.{{ env "BASE_DOMAIN" }}`)'
-      tls: {}
+      tls:
+        certResolver: cloudflare
     fb-home:
       middlewares:
         - "filebrowser-host-rewrite@file"
       service: home
       rule: 'Host(`fb-home.{{ env "BASE_DOMAIN" }}`)'
-      tls: {}
+      tls:
+        certResolver: cloudflare
     excalidraw:
       middlewares:
         - "excalidraw-host-rewrite@file"
       service: home
       rule: 'Host(`excalidraw.{{ env "BASE_DOMAIN" }}`)'
-      tls: {}
+      tls:
+        certResolver: cloudflare
     audiobookshelf:
       middlewares:
         - "audiobookshelf-host-rewrite@file"
       service: home
       rule: 'Host(`audiobookshelf.{{ env "BASE_DOMAIN" }}`)'
-      tls: {}
+      tls:
+        certResolver: cloudflare

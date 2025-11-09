@@ -58,7 +58,7 @@
         src: "{{ item.src }}"
         dest: "{{ item.dest }}"
         mode: "{{ item.mode }}"
-      notify: {{ item.notify }}
+      notify: "{{ item.notify }}"
       loop:
         - src: "{{ github_workdir }}/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml.j2"
           dest: /etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml

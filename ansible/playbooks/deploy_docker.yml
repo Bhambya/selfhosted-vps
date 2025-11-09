@@ -72,7 +72,7 @@
         state: present
         remove_orphans: true
         wait: true
-        wait_timeout: 300
+        wait_timeout: 600
 
     - name: Run Docker Command
       become: true

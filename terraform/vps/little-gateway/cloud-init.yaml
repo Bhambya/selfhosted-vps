@@ -1,0 +1,108 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+apt:
+  sources:
+    fish_shell:
+      source: ppa:fish-shell/release-4
+packages:
+  - ufw
+  - git
+  - wireguard
+  - logrotate
+  - sqlite3
+  - tmux
+  - restic
+  - fish
+
+disable_root: true
+
+write_files:
+  - content: |
+      # Disables root login
+      PermitRootLogin no
+      PasswordAuthentication no
+    path: /etc/ssh/sshd_config.d/60-disable-root-login.conf
+    permissions: '0644'
+  - content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "10m",
+          "max-file": "3"
+        },
+        "default-address-pools": [
+          {
+            "base": "172.16.0.0/12",
+            "size": 24
+          }
+        ],
+        "metrics-addr": "0.0.0.0:9323"
+      }
+    path: /etc/docker/daemon.json
+    permissions: '0644'
+  - content: |
+      /var/log/authelia/*.log {
+        weekly
+        rotate 12
+        missingok
+        notifempty
+        copytruncate
+        dateext
+        dateformat .%Y-%m-%d
+      }
+    path: /etc/logrotate.d/authelia-logrotate.conf
+    permissions: '0644'
+  - content: |
+      /var/log/traefik/*.log {
+        weekly
+        rotate 12
+        missingok
+        notifempty
+        copytruncate
+        dateext
+        dateformat .%Y-%m-%d
+      }
+    path: /etc/logrotate.d/traefik-logrotate.conf
+    permissions: '0644'
+  - content: |
+      /var/log/vaultwarden/*.log {
+        weekly
+        rotate 12
+        missingok
+        notifempty
+        dateext
+        dateformat .%Y-%m-%d
+        postrotate
+          docker -H unix:///var/run/docker.sock kill --signal="HUP" $(docker ps | grep vaultwarden | awk '{print $1}')
+        endscript
+      }
+    path: /etc/logrotate.d/vaultwarden-logrotate.conf
+    permissions: '0644'
+
+runcmd:
+  - ufw default deny incoming
+  - ufw default allow outgoing 
+  - ufw allow http
+  - ufw allow https
+  - ufw allow ssh
+  - ufw allow 51820/udp
+  - ufw --force enable
+  - rm /etc/apt/sources.list.d/crowdsec_crowdsec.list
+  - curl -s https://install.crowdsec.net | sudo sh
+  - apt-get -y install crowdsec-firewall-bouncer-iptables
+  - apt-get update
+  - apt-get -y install ca-certificates curl
+  - install -m 0755 -d /etc/apt/keyrings
+  - rm /etc/apt/keyrings/docker.asc
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  - chmod a+r /etc/apt/keyrings/docker.asc
+  - rm /etc/apt/sources.list.d/docker.list
+  - | # Add the repository to Apt sources:
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+      $(. /etc/os-release && echo "$${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+      sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  - apt-get update
+  - apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  - usermod -s /usr/bin/fish ubuntu

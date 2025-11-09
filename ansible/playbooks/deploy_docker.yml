@@ -25,6 +25,14 @@
       ansible.builtin.set_fact:
         secret_mapping: "{{ secret_mapping_content['content'] | b64decode | from_yaml }}"
 
+    - name: Change docker-data directory owner
+      become: true
+      ansible.builtin.file:
+        path: "/var/lib/docker-data"
+        owner: ubuntu
+        state: directory
+        mode: "750"
+
     - name: Create docker-data directories
       ansible.builtin.file:
         path: "/var/lib/docker-data/{{ item }}"

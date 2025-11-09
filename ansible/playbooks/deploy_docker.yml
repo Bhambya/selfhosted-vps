@@ -107,6 +107,7 @@
  
   handlers:
     - name: Restart crowdsec-firewall-bouncer
+      become: true
       ansible.builtin.systemd_service:
         name: crowdsec-firewall-bouncer
         state: restarted

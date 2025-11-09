@@ -28,6 +28,13 @@ jobs:
         run: |
           ansible-playbook ansible/playbooks/prepare_control_node.yml
 
+      - name: ⬇️ Get Secrets from Bitwarden
+        uses: bitwarden/sm-action@v2
+        with:
+          access_token: ${{ secrets.BWS_ACCESS_TOKEN }}
+          secrets: |
+            38c9a270-f749-436d-bdff-b39000d8fd77 > ANSIBLE_SSH_KEY
+
       # Create the inventory.yml file dynamically from the VPS_HOST secret
       - name: Create inventory file
         run: |
@@ -36,7 +43,6 @@ jobs:
           echo "    vps:" >> inventory.yml
           echo "      ansible_user: ubuntu" >> inventory.yml
           echo "      ansible_host: ${{ secrets.VPS_HOST }}" >> inventory.yml
-          echo "      ansible_become_pass: ${{ secrets.ANSIBLE_BECOME_PASSWORD }}" >> inventory.yml
         shell: bash
 
       - name: Create vars file
@@ -50,7 +56,7 @@ jobs:
       - name: Load SSH Key
         uses: webfactory/ssh-agent@v0.9.1
         with:
-          ssh-private-key: ${{ secrets.ANSIBLE_SSH_KEY }}
+          ssh-private-key: ${{ env.ANSIBLE_SSH_KEY }}
 
       # Run the Ansible playbook
       - name: Run Ansible Playbook

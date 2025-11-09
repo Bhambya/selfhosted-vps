@@ -118,7 +118,6 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./traefik/config/traefik.yml:/traefik.yml:ro"
       - "./traefik/config/dynamic.yml:/dynamic.yml:ro"
-      # - "./traefik/data/acme.json:/data/acme.json"
       - "/var/lib/docker-data/traefik/data:/data"
       - "/var/log/traefik:/logs"
     labels:
@@ -376,6 +375,7 @@ services:
       - /var/lib/docker-data/backrest/cache:/cache/
       # backup paths
       - /var/lib/docker-data/authelia/:/var/lib/docker-data/authelia:ro
+      - /var/lib/docker-data/traefik/data:/var/lib/docker-data/traefik/data:ro
       - /var/lib/docker-data/lldap/:/var/lib/docker-data/lldap:ro
       - /var/lib/docker-data/vaultwarden:/var/lib/docker-data/vaultwarden:ro
       - /var/lib/docker-data/apprise/config:/var/lib/docker-data/apprise/config/:ro

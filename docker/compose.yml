@@ -621,7 +621,6 @@ services:
     container_name: "filebrowser"
     image: "gtstef/filebrowser:1.0.1-beta"
     restart: "unless-stopped"
-    user: $UID
     environment:
       FILEBROWSER_CONFIG: "/config/config.yaml"
       FILEBROWSER_ADMIN_PASSWORD: $FILEBROWSER_ADMIN_PASSWORD

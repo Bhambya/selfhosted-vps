@@ -515,7 +515,7 @@ services:
       - "/:/rootfs:ro"
 
   gatus:
-    image: "ghcr.io/twin/gatus:v5.30.0"
+    image: "ghcr.io/twin/gatus:v5.31.0"
     container_name: gatus
     networks:
       proxy:

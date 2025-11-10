@@ -1,0 +1,12 @@
+setup_vpn_hosts:
+  - domain_name: gateway
+    ip: "10.13.13.1"
+    endpoint: "{{ lookup('bitwarden.secrets.lookup', 'ae8d79f6-fb4a-434c-94f2-b3860149c5ec') }}"
+  - domain_name: home-server-docker
+    ip: "10.13.14.1"
+  - domain_name: home-server-wireguard-router
+    ip: "10.13.14.2"
+  - domain_name: home-server-adguard
+    ip: "10.13.14.3"
+  - domain_name: home-server-tailscale
+    ip: "10.13.14.4"

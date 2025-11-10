@@ -17,15 +17,6 @@
         update: true
         force: false
 
-    - name: Read secret mapping
-      ansible.builtin.slurp:
-        src: "{{ secrets_mapping_file }}"
-      register: secret_mapping_content
-
-    - name: Parse secret mapping
-      ansible.builtin.set_fact:
-        secret_mapping: "{{ secret_mapping_content['content'] | b64decode | from_yaml }}"
-
     - name: "Check {{ docker_data_dir }} directory"
       ansible.builtin.stat:
         path: "{{ docker_data_dir }}"
@@ -58,6 +49,21 @@
       loop:
         - github-release-monitor
         - filebrowser
+
+    - name: Configure Wireguard VPN
+      ansible.builtin.include_role:
+        name: setup_vpn
+      vars:
+        current_host: "gateway"
+
+    - name: Read secret mapping
+      ansible.builtin.slurp:
+        src: "{{ secrets_mapping_file }}"
+      register: secret_mapping_content
+
+    - name: Parse secret mapping
+      ansible.builtin.set_fact:
+        secret_mapping: "{{ secret_mapping_content['content'] | b64decode | from_yaml }}"
 
     - name: Set env_files
       ansible.builtin.set_fact:

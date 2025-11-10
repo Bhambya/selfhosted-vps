@@ -8,7 +8,7 @@ resource oci_core_subnet export_subnet-20250216-1019 {
     "Oracle-Tags.CreatedOn" = "2025-02-16T09:30:25.142Z"
   }
   dhcp_options_id = oci_core_vcn.default-vcn.default_dhcp_options_id
-  display_name    = "subnet-20250216-1019"
+  display_name    = "gateway-subnet"
   dns_label       = "subnet02161030"
   freeform_tags = {
   }

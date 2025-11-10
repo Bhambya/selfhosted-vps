@@ -40,44 +40,6 @@ write_files:
       }
     path: /etc/docker/daemon.json
     permissions: '0644'
-  - content: |
-      /var/log/authelia/*.log {
-        weekly
-        rotate 12
-        missingok
-        notifempty
-        copytruncate
-        dateext
-        dateformat .%Y-%m-%d
-      }
-    path: /etc/logrotate.d/authelia-logrotate.conf
-    permissions: '0644'
-  - content: |
-      /var/log/traefik/*.log {
-        weekly
-        rotate 12
-        missingok
-        notifempty
-        copytruncate
-        dateext
-        dateformat .%Y-%m-%d
-      }
-    path: /etc/logrotate.d/traefik-logrotate.conf
-    permissions: '0644'
-  - content: |
-      /var/log/vaultwarden/*.log {
-        weekly
-        rotate 12
-        missingok
-        notifempty
-        dateext
-        dateformat .%Y-%m-%d
-        postrotate
-          docker -H unix:///var/run/docker.sock kill --signal="HUP" $(docker ps | grep vaultwarden | awk '{print $1}')
-        endscript
-      }
-    path: /etc/logrotate.d/vaultwarden-logrotate.conf
-    permissions: '0644'
 
 runcmd:
   - ufw default deny incoming

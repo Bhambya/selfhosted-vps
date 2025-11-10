@@ -73,6 +73,16 @@
           notify: "Restart crowdsec-firewall-bouncer"
           mode: "0600"
 
+    - name: Copy logrotate files
+      become: true
+      ansible.builtin.copy:
+        src: "{{ github_workdir }}/etc/logrotate.d/"  # trailing slash copies the content
+        dest: /etc/logrotate.d
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Restart logrotate
+
     - name: Restart services using Docker Compose
       become: true
       community.docker.docker_compose_v2:
@@ -119,3 +129,10 @@
       ansible.builtin.systemd_service:
         name: crowdsec-firewall-bouncer
         state: restarted
+
+    - name: Restart logrotate
+      become: true
+      ansible.builtin.systemd_service:
+        name: logrotate
+        state: restarted
+

@@ -69,5 +69,3 @@ runcmd:
   - apt-get update
   - apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
   - usermod -s /usr/bin/fish ubuntu
-  # Restore backup
-  - AWS_ACCESS_KEY_ID=${restic_aws_access_key_id} AWS_SECRET_ACCESS_KEY=${restic_aws_secret_access_key} RESTIC_PASSWORD=${restic_repository_password} restic restore latest --repo ${restic_repository} --no-cache --cleanup-cache --target /

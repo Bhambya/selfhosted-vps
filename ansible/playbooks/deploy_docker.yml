@@ -5,6 +5,7 @@
     repo_path: "/home/{{ ansible_user }}/selfhosted-vps"
     secrets_mapping_file: "{{ repo_path }}/ansible/secret-mappings.yml"
     github_workdir: "{{ lookup('ansible.builtin.env', 'GITHUB_WORKSPACE') }}"
+    docker_data_dir: "/var/lib/docker-data"
   environment:
     PATH: "~/.local/bin:{{ lookup('env', 'PATH') }}"
   tasks:
@@ -25,17 +26,33 @@
       ansible.builtin.set_fact:
         secret_mapping: "{{ secret_mapping_content['content'] | b64decode | from_yaml }}"
 
-    - name: Change docker-data directory owner
+    - name: "Check {{ docker_data_dir }} directory"
+      ansible.builtin.stat:
+        path: "{{ docker_data_dir }}"
+      become: true
+      register: docker_data_stat_result
+
+    - name: "Restore latest restic snapshot"
+      become: true
+      ansible.builtin.command: restic restore latest --no-cache --cleanup-cache --target /
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ lookup('bitwarden.secrets.lookup', 'a6f69723-99c3-40d1-9888-b39000ca1867') }}"
+        AWS_SECRET_ACCESS_KEY: "{{ lookup('bitwarden.secrets.lookup', 'c9e13db6-5c78-4c62-8110-b39000ca3ea3') }}"
+        RESTIC_PASSWORD: "{{ lookup('bitwarden.secrets.lookup', 'cf687098-8d02-45de-8490-b39000ca755e') }}"
+        RESTIC_REPOSITORY: "{{ lookup('bitwarden.secrets.lookup', '9baa12e1-5481-4b11-abe6-b39000cc99cd') }}"
+      when: docker_data_stat_result.stat.isdir is not defined or (not docker_data_stat_result.stat.isdir)
+
+    - name: Change {{ docker_data_dir }} directory owner
       become: true
       ansible.builtin.file:
-        path: "/var/lib/docker-data"
+        path: "{{ docker_data_dir }}"
         owner: ubuntu
         state: directory
         mode: "750"
 
     - name: Create docker-data directories
       ansible.builtin.file:
-        path: "/var/lib/docker-data/{{ item }}"
+        path: "{{ docker_data_dir }}/{{ item }}"
         state: directory
         mode: "750"
       loop:
@@ -94,7 +111,7 @@
 
     - name: Run Docker Command
       become: true
-      command: "docker compose ps --format 'table {% raw %}{{.Names}}\t{{.RunningFor}}\t{{.Status}}'{% endraw %}"
+      ansible.builtin.command: "docker compose ps --format 'table {% raw %}{{.Names}}\t{{.RunningFor}}\t{{.Status}}'{% endraw %}"
       args:
         chdir: "{{ repo_path }}/docker"
       register: docker_output

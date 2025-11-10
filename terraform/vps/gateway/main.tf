@@ -51,15 +51,7 @@ resource "oci_core_instance" "gateway" {
     ])
 
     # Cloud-init script, base64 encoded
-    user_data = base64encode(
-      templatefile("${path.module}/cloud-init.yaml",
-      {
-        restic_repository = data.bitwarden_secret.restic_repository.value,
-        restic_aws_access_key_id = data.bitwarden_secret.restic_aws_access_key_id.value,
-        restic_aws_secret_access_key = data.bitwarden_secret.restic_aws_secret_access_key.value,
-        restic_repository_password = data.bitwarden_secret.restic_repository_password.value
-      })
-    )
+    user_data = base64encode(templatefile("${path.module}/cloud-init.yaml", {}))
   }
 }
 

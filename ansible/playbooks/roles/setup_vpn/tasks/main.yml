@@ -5,6 +5,6 @@
     state: present
     marker: "# {mark} VPN hosts (Ansible managed)"
     block: |
-      {% for item in setup_vpn_hosts %}
-      {% if current_host == item.domain_name %}127.0.0.1{% else %}{{ item.ip }}{% endif %} {{ item.domain_name }}
+      {% for item in setup_vpn_hosts | dict2items %}
+      {% if current_host == item.key %}127.0.0.1{% else %}{{ item.value.ip }}{% endif %} {{ item.key }}
       {% endfor %}

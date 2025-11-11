@@ -33,7 +33,6 @@ jobs:
           echo "    vps:" >> inventory.yml
           echo "      ansible_user: ubuntu" >> inventory.yml
           echo "      ansible_host: ${{ secrets.VPS_HOST }}" >> inventory.yml
-          echo "      ansible_become_pass: ${{ secrets.ANSIBLE_BECOME_PASSWORD }}" >> inventory.yml
         shell: bash
 
       - name: ⬇️ Get Secrets from Bitwarden

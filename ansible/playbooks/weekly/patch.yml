@@ -10,6 +10,23 @@
     - name: Upgrade all packages
       ansible.builtin.apt:
         upgrade: true
+      notify: Reboot
+
+    - name: Check which packages are triggering the reboot (for logging)
+      ansible.builtin.slurp:
+        src: /var/run/reboot-required.pkgs
+      register: reboot_packages
+      when: reboot_required_file.stat.exists
+
+    - name: Print the packages which require a reboot
+      ansible.builtin.debug:
+        msg: "Reboot is required by the following packages: {{ reboot_packages['content'] | b64decode }}"
+      when: reboot_required_file.stat.exists
+
+    - name: Reboot
+      ansible.builtin.reboot:
+        reboot_timeout: 300
+      when: reboot_required_file.stat.exists
 
     - name: Remove unnecessary packages
       ansible.builtin.apt:

@@ -11,6 +11,11 @@
       ansible.builtin.apt:
         upgrade: true
 
+    - name: Check if a reboot is required
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: reboot_required_file
+
     - name: Check which packages are triggering the reboot (for logging)
       ansible.builtin.slurp:
         src: /var/run/reboot-required.pkgs

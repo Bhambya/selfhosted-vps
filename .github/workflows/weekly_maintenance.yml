@@ -36,11 +36,18 @@ jobs:
           echo "      ansible_become_pass: ${{ secrets.ANSIBLE_BECOME_PASSWORD }}" >> inventory.yml
         shell: bash
 
+      - name: ⬇️ Get Secrets from Bitwarden
+        uses: bitwarden/sm-action@v2
+        with:
+          access_token: ${{ secrets.BWS_ACCESS_TOKEN }}
+          secrets: |
+            38c9a270-f749-436d-bdff-b39000d8fd77 > ANSIBLE_SSH_KEY
+
       # Load the SSH private key into the ssh-agent
       - name: Load SSH Key
         uses: webfactory/ssh-agent@v0.9.1
         with:
-          ssh-private-key: ${{ secrets.ANSIBLE_SSH_KEY }}
+          ssh-private-key: ${{ env.ANSIBLE_SSH_KEY }}
 
       # Run the Ansible playbook
       - name: Run Ansible Playbook

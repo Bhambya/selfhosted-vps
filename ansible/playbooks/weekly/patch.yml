@@ -10,7 +10,6 @@
     - name: Upgrade all packages
       ansible.builtin.apt:
         upgrade: true
-      notify: Reboot
 
     - name: Check which packages are triggering the reboot (for logging)
       ansible.builtin.slurp:

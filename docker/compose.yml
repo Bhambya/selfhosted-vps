@@ -31,7 +31,8 @@ services:
       traefik.http.routers.lldap.rule: "Host(`ldap.${BASE_DOMAIN}`)"
       traefik.http.services.lldap.loadbalancer.server.port: "17170"
       traefik.http.routers.lldap.tls: "true"
-      traefik.http.routers.lldap.tls.certResolver: "cloudflare"
+      traefik.http.routers.lldap.tls.certresolver: "cloudflare"
+      traefik.http.routers.lldap.entrypoints: "https"
 
   authelia:
     image: "ghcr.io/authelia/authelia:4.39.13"
@@ -74,14 +75,14 @@ services:
       LINKWARDEN_OAUTH_CLIENT_ID: ${LINKWARDEN_OAUTH_CLIENT_ID}
       LINKWARDEN_OAUTH_DIGEST: ${LINKWARDEN_OAUTH_DIGEST}
     labels:
-      traefik.enable: "true"
-      traefik.docker.network: "authelia"
-      traefik.http.routers.authelia.rule: "Host(`auth.${BASE_DOMAIN}`)"
-      traefik.http.routers.authelia.tls: "true"
-      traefik.http.routers.authelia.tls.certResolver: "cloudflare"
-      traefik.http.middlewares.authelia.forwardAuth.address: "http://authelia:9091/api/authz/forward-auth"
-      traefik.http.middlewares.authelia.forwardAuth.trustForwardHeader: "true"
-      traefik.http.middlewares.authelia.forwardAuth.authResponseHeaders: "Remote-User,Remote-Groups,Remote-Name,Remote-Email"
+      - "traefik.enable=true"
+      - "traefik.docker.network=authelia"
+      - "traefik.http.routers.authelia.rule=Host(`auth.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.authelia.entrypoints=https"
+      - "traefik.http.routers.authelia.tls.certresolver=cloudflare"
+      - "traefik.http.middlewares.authelia.forwardAuth.address=http://authelia:9091/api/authz/forward-auth"
+      - "traefik.http.middlewares.authelia.forwardAuth.trustForwardHeader=true"
+      - "traefik.http.middlewares.authelia.forwardAuth.authResponseHeaders=Remote-User,Remote-Groups,Remote-Name,Remote-Email"
     depends_on:
       - "redis-authelia"
       - lldap
@@ -110,6 +111,7 @@ services:
       CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
       BASE_DOMAIN: ${BASE_DOMAIN}
     command:
+      - "--entrypoints.https.http.tls=true"
       - "--entrypoints.https.http.tls.certResolver=cloudflare"
       - "--entrypoints.https.http.tls.domains[0].main=${BASE_DOMAIN}"
       - "--entrypoints.https.http.tls.domains[0].sans=*.${BASE_DOMAIN}"
@@ -126,6 +128,7 @@ services:
       traefik.http.routers.traefik-secure.service: "api@internal"
       traefik.http.routers.traefik-secure.tls: "true"
       traefik.http.routers.traefik-secure.tls.certResolver: "cloudflare"
+      traefik.http.routers.traefik-secure.entrypoints: "https"
 
   whoami:
     image: "traefik/whoami:v1.11"
@@ -136,7 +139,8 @@ services:
       traefik.enable: "true"
       traefik.http.routers.whoami-secure.rule: "Host(`whoami.${BASE_DOMAIN}`)"
       traefik.http.routers.whoami-secure.tls: "true"
-      traefik.http.routers.whoami-secure.tls.certResolver: "cloudflare"
+      traefik.http.routers.whoami-secure.tls.certresolver: "cloudflare"
+      traefik.http.routers.whoami-secure.entrypoints: "https"
     networks:
       proxy:
 
@@ -192,7 +196,8 @@ services:
       traefik.http.routers.it-tools.rule: "Host(`it-tools.${BASE_DOMAIN}`)"
       traefik.http.services.it-tools.loadbalancer.server.port: "80"
       traefik.http.routers.it-tools.tls: "true"
-      traefik.http.routers.it-tools.tls.certResolver: "cloudflare"
+      traefik.http.routers.it-tools.tls.certresolver: "cloudflare"
+      traefik.http.routers.it-tools.entrypoints: "https"
     networks:
       proxy:
 
@@ -251,7 +256,8 @@ services:
       traefik.http.routers.stirling-pdf.rule: "Host(`stirling-pdf.${BASE_DOMAIN}`)"
       traefik.http.services.stirling-pdf.loadbalancer.server.port: "8080"
       traefik.http.routers.stirling-pdf.tls: "true"
-      traefik.http.routers.stirling-pdf.tls.certResolver: "cloudflare"
+      traefik.http.routers.stirling-pdf.tls.certresolver: "cloudflare"
+      traefik.http.routers.stirling-pdf.entrypoints: "https"
     networks:
       proxy:
 
@@ -332,7 +338,8 @@ services:
       traefik.http.routers.grafana.rule: "Host(`grafana.${BASE_DOMAIN}`)"
       traefik.http.services.grafana.loadbalancer.server.port: "3000"
       traefik.http.routers.grafana.tls: "true"
-      traefik.http.routers.grafana.tls.certResolver: "cloudflare"
+      traefik.http.routers.grafana.tls.certresolver: "cloudflare"
+      traefik.http.routers.grafana.entrypoints: "https"
 
   vaultwarden:
     image: "ghcr.io/dani-garcia/vaultwarden:1.34.3"
@@ -361,7 +368,8 @@ services:
       traefik.http.routers.vaultwarden.rule: "Host(`vw.${BASE_DOMAIN}`)"
       traefik.http.services.vaultwarden.loadbalancer.server.port: "80"
       traefik.http.routers.vaultwarden.tls: "true"
-      traefik.http.routers.vaultwarden.tls.certResolver: "cloudflare"
+      traefik.http.routers.vaultwarden.tls.certresolver: "cloudflare"
+      traefik.http.routers.vaultwarden.entrypoints: "https"
 
   backrest:
     image: "garethgeorge/backrest:v1.10.1"
@@ -393,7 +401,8 @@ services:
       traefik.http.routers.backrest.rule: "Host(`backrest.${BASE_DOMAIN}`)"
       traefik.http.services.backrest.loadbalancer.server.port: "9898"
       traefik.http.routers.backrest.tls: "true"
-      traefik.http.routers.backrest.tls.certResolver: "cloudflare"
+      traefik.http.routers.backrest.tls.certresolver: "cloudflare"
+      traefik.http.routers.backrest.entrypoints: "https"
 
   apprise:
     image: "caronc/apprise:1.2"
@@ -414,7 +423,8 @@ services:
       traefik.http.routers.apprise.rule: "Host(`apprise.${BASE_DOMAIN}`)"
       traefik.http.services.apprise.loadbalancer.server.port: "8000"
       traefik.http.routers.apprise.tls: "true"
-      traefik.http.routers.apprise.tls.certResolver: "cloudflare"
+      traefik.http.routers.apprise.tls.certresolver: "cloudflare"
+      traefik.http.routers.apprise.entrypoints: "https"
 
   gotenberg:
     image: "docker.io/gotenberg/gotenberg:8.24.0"
@@ -496,7 +506,8 @@ services:
       traefik.http.routers.paperless.rule: "Host(`paperless.${BASE_DOMAIN}`)"
       traefik.http.services.paperless.loadbalancer.server.port: "8000"
       traefik.http.routers.paperless.tls: "true"
-      traefik.http.routers.paperless.tls.certResolver: "cloudflare"
+      traefik.http.routers.paperless.tls.certresolver: "cloudflare"
+      traefik.http.routers.paperless.entrypoints: "https"
 
   cadvisor:
     image: "ghcr.io/google/cadvisor:v0.53.0"
@@ -535,7 +546,8 @@ services:
       traefik.http.routers.gatus.rule: "Host(`gatus.${BASE_DOMAIN}`)"
       traefik.http.services.gatus.loadbalancer.server.port: "8080"
       traefik.http.routers.gatus.tls: "true"
-      traefik.http.routers.gatus.tls.certResolver: "cloudflare"
+      traefik.http.routers.gatus.tls.certresolver: "cloudflare"
+      traefik.http.routers.gatus.entrypoints: "https"
 
   postgres:
     container_name: postgres
@@ -578,7 +590,8 @@ services:
       traefik.http.routers.linkwarden.rule: "Host(`linkwarden.${BASE_DOMAIN}`)"
       traefik.http.services.linkwarden.loadbalancer.server.port: "3000"
       traefik.http.routers.linkwarden.tls: "true"
-      traefik.http.routers.linkwarden.tls.certResolver: "cloudflare"
+      traefik.http.routers.linkwarden.tls.certresolver: "cloudflare"
+      traefik.http.routers.linkwarden.entrypoints: "https"
 
   whatsapp:
     container_name: whatsapp
@@ -604,7 +617,8 @@ services:
       traefik.http.routers.chromium.rule: "Host(`whatsapp.${BASE_DOMAIN}`)"
       traefik.http.services.chromium.loadbalancer.server.port: "3000"
       traefik.http.routers.chromium.tls: "true"
-      traefik.http.routers.chromium.tls.certResolver: "cloudflare"
+      traefik.http.routers.chromium.tls.certresolver: "cloudflare"
+      traefik.http.routers.chromium.entrypoints: "https"
 
   readeck:
     image: "codeberg.org/readeck/readeck:0.20.4"
@@ -619,7 +633,8 @@ services:
       traefik.http.routers.readeck.rule: "Host(`readeck.${BASE_DOMAIN}`)"
       traefik.http.services.readeck.loadbalancer.server.port: "8000"
       traefik.http.routers.readeck.tls: "true"
-      traefik.http.routers.readeck.tls.certResolver: "cloudflare"
+      traefik.http.routers.readeck.tls.certresolver: "cloudflare"
+      traefik.http.routers.readeck.entrypoints: "https"
 
   filebrowser:
     container_name: "filebrowser"
@@ -639,7 +654,8 @@ services:
       traefik.http.routers.filebrowser.rule: "Host(`filebrowser-vps.${BASE_DOMAIN}`)"
       traefik.http.services.filebrowser.loadbalancer.server.port: "80"
       traefik.http.routers.filebrowser.tls: "true"
-      traefik.http.routers.filebrowser.tls.certResolver: "cloudflare"
+      traefik.http.routers.filebrowser.tls.certresolver: "cloudflare"
+      traefik.http.routers.filebrowser.entrypoints: "https"
 
   github-release-monitor:
     container_name: "github-release-monitor"
@@ -650,7 +666,8 @@ services:
       traefik.http.routers.github-release-monitor.rule: "Host(`github-release-monitor.${BASE_DOMAIN}`)"
       traefik.http.services.github-release-monitor.loadbalancer.server.port: "3000"
       traefik.http.routers.github-release-monitor.tls: "true"
-      traefik.http.routers.github-release-monitor.tls.certResolver: "cloudflare"
+      traefik.http.routers.github-release-monitor.tls.certresolver: "cloudflare"
+      traefik.http.routers.github-release-monitor.entrypoints: "https"
     networks:
       proxy:
     environment:

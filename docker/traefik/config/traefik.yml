@@ -62,6 +62,10 @@ certificatesResolvers:
           - "1.0.0.1:53"
 
 tls:
+  stores:
+    default:
+      defaultGeneratedCert:
+        resolver: cloudflare
   options:
     default:
       minVersion: "VersionTLS12"

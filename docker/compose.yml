@@ -116,6 +116,8 @@ services:
       - "--entrypoints.https.http.tls.domains[0].main=${BASE_DOMAIN}"
       - "--entrypoints.https.http.tls.domains[0].sans=*.${BASE_DOMAIN}"
       - "--certificatesResolvers.cloudflare.acme.email=${CF_API_EMAIL}"
+      - "--tls.stores.default.defaultGeneratedCert.domain.main=${BASE_DOMAIN}"
+      - "--tls.stores.default.defaultGeneratedCert.domain.sans=*.${BASE_DOMAIN}"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./traefik/config/traefik.yml:/traefik.yml:ro"

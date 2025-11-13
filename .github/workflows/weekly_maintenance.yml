@@ -53,7 +53,3 @@ jobs:
             echo "Running $playbook..."
             ansible-playbook -i "gateway," "$playbook"
           done
-
-      - name: Remove inventory file
-        run: rm inventory.yml
-        shell: bash

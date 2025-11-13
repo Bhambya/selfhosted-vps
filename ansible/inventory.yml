@@ -1,0 +1,18 @@
+ungrouped:
+  hosts:
+    gateway:
+
+home_vpn:
+  hosts:
+    home-server-adguard:
+    home-server-containers:
+    home-server-wireguard-router:
+    home-server-tailscale:
+
+# VPN between gateway and the home-server-wireguard-router VM
+gateway_home_router_vpn:
+  hosts:
+    # Use a different name, and define ansible_host, to avoid mixing of vars without
+    # needing to prefix vars with interface name.
+    home-server-containers-wg1:
+    gateway:

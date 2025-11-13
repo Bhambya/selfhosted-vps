@@ -1,0 +1,9 @@
+---
+ansible_user: ubuntu
+wireguard_conf_backup: true
+vpn_ips:
+  subnet_home:
+    home-server-adguard: '10.13.14.4/32'
+    home-server-containers: '10.13.14.3/32'
+    home-server-wireguard-router: '10.13.14.1/32'
+    home-server-tailscale: '10.13.14.2/32'

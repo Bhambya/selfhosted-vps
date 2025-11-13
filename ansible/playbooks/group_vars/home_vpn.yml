@@ -1,0 +1,5 @@
+---
+ansible_host: "{{ {% if in_home_network %} home_network_address {% else %} vpn_ip {% endif %} }}"
+wireguard_endpoint: "{{ home_network_address }}"
+wireguard_addresses:
+  - "{{ vpn_ip }}/32"

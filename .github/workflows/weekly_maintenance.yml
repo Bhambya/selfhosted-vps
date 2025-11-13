@@ -20,20 +20,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install ansible
+          pip install bitwarden-sdk
+          ansible-galaxy collection install bitwarden.secrets
+          ansible-galaxy role install -r ./ansible/requirements.yml
 
       - name: Prepare control node
         run: |
           ansible-playbook ansible/playbooks/prepare_control_node.yml
-
-      # Create the inventory.yml file dynamically from the VPS_HOST secret
-      - name: Create inventory file
-        run: |
-          echo "all:" > inventory.yml
-          echo "  hosts:" >> inventory.yml
-          echo "    vps:" >> inventory.yml
-          echo "      ansible_user: ubuntu" >> inventory.yml
-          echo "      ansible_host: ${{ secrets.VPS_HOST }}" >> inventory.yml
-        shell: bash
 
       - name: ⬇️ Get Secrets from Bitwarden
         uses: bitwarden/sm-action@v2
@@ -57,7 +50,7 @@ jobs:
           echo "Running all playbooks in ansible/playbooks/weekly..."
           for playbook in ansible/playbooks/weekly/*.yml; do
             echo "Running $playbook..."
-            ansible-playbook -i inventory.yml "$playbook"
+            ansible-playbook -i "gateway," "$playbook"
           done
 
       - name: Remove inventory file

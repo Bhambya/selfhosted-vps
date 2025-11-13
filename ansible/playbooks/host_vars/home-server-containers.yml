@@ -1,0 +1,3 @@
+---
+vpn_ip: "10.13.14.3"
+home_network_address: "containers.local"

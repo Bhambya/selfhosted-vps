@@ -1,0 +1,20 @@
+---
+ansible_host: adguard.local
+wireguard_endpoint: "" # it does not have a public IP
+wireguard_interface: wg1
+# when using several interface on one host, we must use different ports
+wireguard_port: 51821
+wireguard_addresses:
+  - "10.13.14.0/24"
+wireguard_preup:
+  - sysctl -w net.ipv4.ip_forward=1
+wireguard_postup:
+  # allow gateway to reach out to home server VMs
+  # this is needed to deploy ansible playbooks using the gateway as a jump host
+  - iptables -A FORWARD -i %i -o wg0 -j ACCEPT
+  # disallow home VMs from making new connections to the gateway
+  # only allow existing connections
+  - iptables -A FORWARD -o %i -i wg0 --state ESTABLISHED,RELATED -j ACCEPT
+wireguard_predown:
+  - iptables -D FORWARD -i %i -o wg0 -j ACCEPT
+  - iptables -D FORWARD -o %i -i wg0 --state ESTABLISHED,RELATED -j ACCEPT

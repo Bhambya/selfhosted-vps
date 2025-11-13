@@ -23,6 +23,7 @@ jobs:
           pip install ansible
           pip install bitwarden-sdk
           ansible-galaxy collection install bitwarden.secrets
+          ansible-galaxy role install -r ./ansible/requirements.yml
 
       - name: Prepare control node
         run: |
@@ -35,28 +36,16 @@ jobs:
           secrets: |
             38c9a270-f749-436d-bdff-b39000d8fd77 > ANSIBLE_SSH_KEY
 
-      # Create the inventory.yml file dynamically from the VPS_HOST secret
-      - name: Create inventory file
-        run: |
-          echo "all:" > inventory.yml
-          echo "  hosts:" >> inventory.yml
-          echo "    vps:" >> inventory.yml
-          echo "      ansible_user: ubuntu" >> inventory.yml
-          echo "      ansible_host: ${{ secrets.VPS_HOST }}" >> inventory.yml
-        shell: bash
-
-      - name: Create vars file
-        run: |
-          mkdir group_vars
-          echo "---" > group_vars/all.yml 
-          echo "local_repo_path: $GITHUB_WORKSPACE" >> group_vars/all.yml
-        shell: bash
-
       # Load the SSH private key into the ssh-agent
       - name: Load SSH Key
         uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ env.ANSIBLE_SSH_KEY }}
+
+      - name: Create vars file
+        run: |
+          echo "local_repo_path: $GITHUB_WORKSPACE" >> group_vars/all.yml
+        shell: bash
 
       # Run the Ansible playbook
       - name: Run Ansible Playbook
@@ -64,7 +53,7 @@ jobs:
           BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
           ANSIBLE_CONFIG: ansible/ansible.cfg
         run: |
-          ansible-playbook -i inventory.yml ansible/playbooks/deploy_docker.yml
+          ansible-playbook -i "gateway," ansible/playbooks/deploy_docker.yml
 
       - name: Remove inventory file
         run: rm inventory.yml

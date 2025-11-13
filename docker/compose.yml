@@ -111,16 +111,42 @@ services:
       CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
       BASE_DOMAIN: ${BASE_DOMAIN}
     command:
+      - --api.dashboard=true
+      - --api.debug=false
+      - --api.insecure=false
+      - --log.level=INFO
+      - --log.filePath=/logs/traefik.log
+      - --accesslog.filePath=/logs/access.log
+      - --metrics.addInternals=true
+      - --metrics.prometheus.addEntryPointsLabels=true
+      - --metrics.prometheus.addRoutersLabels=true
+      - --metrics.prometheus.entryPoint=http
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=proxy
+      - --providers.file.filename=/dynamic.yml
+      - --entrypoints.http.address=:80
+      - --entrypoints.http.http.redirections.entrypoint.to=https
+      - --entrypoints.http.http.redirections.entrypoint.scheme=https
+      - --entrypoints.http.http.redirections.entrypoint.permanent=true
+      - --entrypoints.https.address=:443
       - "--entrypoints.https.http.tls=true"
       - "--entrypoints.https.http.tls.certResolver=cloudflare"
       - "--entrypoints.https.http.tls.domains[0].main=${BASE_DOMAIN}"
       - "--entrypoints.https.http.tls.domains[0].sans=*.${BASE_DOMAIN}"
+      - --entrypoints.https.transport.respondingtimeouts.readtimeout=200s
+      - --entrypoints.https.transport.respondingtimeouts.idletimeout=200s
+      - --entrypoints.https.transport.respondingtimeouts.writetimeout=200s
+      - --entrypoints.https.http.middlewares=crowdsec-bouncer@file,authelia@docker,my-robots-txt@file
+      - --serverstransport.insecureskipverify=true
+      - --certificatesresolvers.cloudflare.acme.storage=/data/acme.json
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1:53,1.0.0.1:53
       - "--certificatesResolvers.cloudflare.acme.email=${CF_API_EMAIL}"
-      - "--tls.stores.default.defaultGeneratedCert.domain.main=${BASE_DOMAIN}"
-      - "--tls.stores.default.defaultGeneratedCert.domain.sans=*.${BASE_DOMAIN}"
+      - --experimental.plugins.robots-txt.modulename=github.com/solution-libre/traefik-plugin-robots-txt
+      - --experimental.plugins.robots-txt.version=v0.2.1
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./traefik/config/traefik.yml:/traefik.yml:ro"
       - "./traefik/config/dynamic.yml:/dynamic.yml:ro"
       - "/var/lib/docker-data/traefik/data:/data"
       - "/var/log/traefik:/logs"
@@ -141,7 +167,7 @@ services:
       traefik.enable: "true"
       traefik.http.routers.whoami-secure.rule: "Host(`whoami.${BASE_DOMAIN}`)"
       traefik.http.routers.whoami-secure.tls: "true"
-      traefik.http.routers.whoami-secure.tls.certresolver: "cloudflare"
+        #traefik.http.routers.whoami-secure.tls.certresolver: "cloudflare"
       traefik.http.routers.whoami-secure.entrypoints: "https"
     networks:
       proxy:

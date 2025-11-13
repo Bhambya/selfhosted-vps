@@ -40,12 +40,8 @@ jobs:
       - name: Load SSH Key
         uses: webfactory/ssh-agent@v0.9.1
         with:
+          log-public-key: false
           ssh-private-key: ${{ env.ANSIBLE_SSH_KEY }}
-
-      - name: Create vars file
-        run: |
-          echo "local_repo_path: $GITHUB_WORKSPACE" >> group_vars/all.yml
-        shell: bash
 
       # Run the Ansible playbook
       - name: Run Ansible Playbook
@@ -53,7 +49,10 @@ jobs:
           BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
           ANSIBLE_CONFIG: ansible/ansible.cfg
         run: |
-          ansible-playbook -i "gateway," ansible/playbooks/deploy_docker.yml
+          ansible-playbook \
+           -i "gateway," \
+           -e "local_repo_path=$GITHUB_WORKSPACE" \
+           ansible/playbooks/deploy_docker.yml
 
       - name: Remove inventory file
         run: rm inventory.yml

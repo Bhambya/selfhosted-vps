@@ -39,6 +39,7 @@ jobs:
       - name: Load SSH Key
         uses: webfactory/ssh-agent@v0.9.1
         with:
+          log-public-key: false
           ssh-private-key: ${{ env.ANSIBLE_SSH_KEY }}
 
       # Run the Ansible playbook

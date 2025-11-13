@@ -27,7 +27,9 @@ jobs:
 
       - name: Prepare control node
         run: |
-          ansible-playbook ansible/playbooks/prepare_control_node.yml
+          ansible-playbook \
+           -i "localhost," \
+           ansible/playbooks/prepare_control_node.yml
 
       - name: ⬇️ Get Secrets from Bitwarden
         uses: bitwarden/sm-action@v2

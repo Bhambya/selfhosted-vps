@@ -25,6 +25,8 @@ jobs:
           ansible-galaxy role install -r ./ansible/requirements.yml
 
       - name: Prepare control node
+        env:
+          ANSIBLE_CONFIG: ansible/ansible.cfg
         run: |
           ansible-playbook \
            -i "localhost," \

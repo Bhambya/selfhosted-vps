@@ -1,6 +1,6 @@
 ---
 - name: Install bitwarden CLI
-  hosts: all
+  hosts: localhost
   gather_facts: false
   environment:
     PATH: "~/.local/bin:{{ lookup('env', 'PATH') }}"

@@ -28,9 +28,7 @@ jobs:
         env:
           ANSIBLE_CONFIG: ansible/ansible.cfg
         run: |
-          ansible-playbook \
-           -i "localhost," \
-           ansible/playbooks/prepare_control_node.yml
+          ansible-playbook ansible/playbooks/prepare_control_node.yml
 
       - name: ⬇️ Get Secrets from Bitwarden
         uses: bitwarden/sm-action@v2

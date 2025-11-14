@@ -1,0 +1,56 @@
+#cloud-config
+hostname: ${hostname}
+timezone: Asia/Kolkata
+package_update: true
+apt:
+  sources:
+    fish_shell:
+      source: ppa:fish-shell/release-4
+packages:
+  - qemu-guest-agent
+  - net-tools
+  - curl
+  - wireguard
+  - tmux
+  - vim
+  - avahi-daemon
+  - fish
+%{ for pkg in additional_packages ~}
+  - ${pkg}
+%{ endfor ~}
+
+disable_root: true
+write_files:
+  - content: |
+      # Disables root login
+      PermitRootLogin no
+      PasswordAuthentication no
+    path: /etc/ssh/sshd_config.d/60-disable-root-login.conf
+    permissions: '0644'
+
+users:
+  - default
+  - name: ubuntu
+    groups:
+      - sudo
+    shell: /usr/bin/fish
+    ssh_authorized_keys:
+%{ for key in ssh_authorized_keys ~}
+      - ${key}
+%{ endfor ~}
+    sudo: ALL=(ALL) NOPASSWD:ALL
+
+runcmd:
+  - ufw default deny incoming
+  - ufw default allow outgoing 
+%{ for rule in ufw_allow_rules ~}
+  - ufw allow ${rule}
+%{ endfor ~}
+  - ufw --force enable
+  - systemctl enable qemu-guest-agent
+  - systemctl start qemu-guest-agent
+  - usermod -s /usr/bin/fish ubuntu
+%{ for cmd in additional_rumcmds ~}
+  - ${cmd}
+%{ endfor ~}
+  - echo "done" > /tmp/cloud-config.done

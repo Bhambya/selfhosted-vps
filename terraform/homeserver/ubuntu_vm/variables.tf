@@ -62,3 +62,20 @@ variable "ssh_authorized_keys" {
   default     = []
 }
 
+variable "start_order" {
+  type        = number
+  description = "A non-negative number defining the general startup order."
+}
+
+variable "up_delay" {
+  type        = number
+  default     = 0
+  description = "(Optional) A non-negative number defining the delay in seconds before the next VM is started."
+}
+
+variable "down_delay" {
+  type        = number
+  default     = 0
+  description = "(Optional) A non-negative number defining the delay in seconds before the next VM is shut down."
+}
+

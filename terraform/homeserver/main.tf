@@ -13,7 +13,7 @@ locals {
   adugard_host_ip = "192.168.1.107"
   adguard_config = templatefile("${path.module}/adguard_home_config.tftpl",
     {
-      base_domain: var.base_domain,
+      base_domain : var.base_domain,
       host_ip : local.adugard_host_ip,
       admin_password_hash : data.bitwarden_secret.adguard_admin_password_hash.value
     }
@@ -29,6 +29,7 @@ module "adguard" {
   dedicated_memory = 512
   disk_size        = 4
   disk_import_from = proxmox_virtual_environment_download_file.ubuntu_cloud_image.id
+  start_order      = 1
   ipv4_address     = "${local.adugard_host_ip}/24"
   ipv4_gateway     = "192.168.1.1"
   ssh_authorized_keys = [

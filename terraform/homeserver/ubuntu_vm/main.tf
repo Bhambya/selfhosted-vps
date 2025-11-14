@@ -23,6 +23,12 @@ resource "proxmox_virtual_environment_vm" "ubuntu_vm" {
     size         = var.disk_size
   }
 
+  startup {
+    order      = var.start_order
+    up_delay   = var.up_delay
+    down_delay = var.down_delay
+  }
+
   initialization {
     # uncomment and specify the datastore for cloud-init disk if default `local-lvm` is not available
     datastore_id = "local-zfs"

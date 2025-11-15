@@ -71,9 +71,7 @@ module "tailscale" {
     # One-command install, from https://tailscale.com/download/
     "curl -fsSL https://tailscale.com/install.sh | sh",
     # Set sysctl settings for IP forwarding (useful when configuring an exit node)
-    "echo 'net.ipv4.ip_forward = 1' | tee -a /etc/sysctl.d/99-tailscale.conf",
-    "echo 'net.ipv6.conf.all.forwarding = 1' | tee -a /etc/sysctl.d/99-tailscale.conf",
-    "sysctl -p /etc/sysctl.d/99-tailscale.conf",
+    "echo 'net.ipv4.ip_forward = 1' | tee -a /etc/sysctl.d/99-tailscale.conf && echo 'net.ipv6.conf.all.forwarding = 1' | tee -a /etc/sysctl.d/99-tailscale.conf && sysctl -p /etc/sysctl.d/99-tailscale.conf",
     # Register tailscale node using auth-key.
     # NOTE: This command hangs until you approve the node in tailscale admin UI
     "tailscale up --auth-key=${data.bitwarden_secret.tailscale_auth_key.value}",

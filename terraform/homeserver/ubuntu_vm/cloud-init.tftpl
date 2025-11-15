@@ -27,6 +27,11 @@ write_files:
       PasswordAuthentication no
     path: /etc/ssh/sshd_config.d/60-disable-root-login.conf
     permissions: '0644'
+  - content: |
+      [Resolve]
+      FallbackDNS=${ipv4_gateway}
+    path: /etc/systemd/resolved.conf.d/dns_servers.conf
+    permissions: '0644'
 
 users:
   - default
@@ -50,6 +55,7 @@ runcmd:
   - systemctl enable qemu-guest-agent
   - systemctl start qemu-guest-agent
   - usermod -s /usr/bin/fish ubuntu
+  - systemctl restart systemd-resolved
 %{ for cmd in additional_rumcmds ~}
   - ${cmd}
 %{ endfor ~}

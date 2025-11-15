@@ -19,6 +19,13 @@ packages:
   - ${pkg}
 %{ endfor ~}
 
+%{ if length(mounts) > 0 }
+mounts:
+%{ for mount in mounts }
+  - ${mount}
+%{ endfor }
+%{ endif }
+
 disable_root: true
 write_files:
   - content: |

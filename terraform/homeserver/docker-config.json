@@ -1,0 +1,14 @@
+{
+    "log-driver": "json-file",
+    "log-opts": {
+        "max-size": "10m",
+        "max-file": "3"
+    },
+    "default-address-pools": [
+        {
+            "base": "172.16.0.0/12",
+            "size": 24
+        }
+    ],
+    "metrics-addr": "0.0.0.0:9323"
+}

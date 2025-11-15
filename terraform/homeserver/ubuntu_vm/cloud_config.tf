@@ -8,6 +8,7 @@ resource "proxmox_virtual_environment_file" "user_data_cloud_config" {
       {
         hostname : var.hostname,
         ipv4_gateway: var.ipv4_gateway,
+        mounts: var.mounts,
         ssh_authorized_keys : var.ssh_authorized_keys,
         additional_rumcmds : var.additional_rumcmds,
         additional_packages : var.additional_packages,

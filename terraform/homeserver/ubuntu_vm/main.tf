@@ -33,6 +33,10 @@ resource "proxmox_virtual_environment_vm" "ubuntu_vm" {
     # uncomment and specify the datastore for cloud-init disk if default `local-lvm` is not available
     datastore_id = "local-zfs"
 
+    dns {
+      servers = var.dns_servers
+    }
+
     ip_config {
       ipv4 {
         address = var.ipv4_address

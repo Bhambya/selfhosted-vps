@@ -10,11 +10,11 @@ resource "proxmox_virtual_environment_download_file" "ubuntu_cloud_image" {
 }
 
 locals {
-  adugard_host_ip = "192.168.1.107"
+  adguard_host_ip = "192.168.1.107"
   adguard_config = templatefile("${path.module}/adguard_home_config.tftpl",
     {
       base_domain : var.base_domain,
-      host_ip : local.adugard_host_ip,
+      host_ip : local.adguard_host_ip,
       admin_password_hash : data.bitwarden_secret.adguard_admin_password_hash.value
     }
   )
@@ -30,8 +30,9 @@ module "adguard" {
   disk_size        = 4
   disk_import_from = proxmox_virtual_environment_download_file.ubuntu_cloud_image.id
   start_order      = 1
-  ipv4_address     = "${local.adugard_host_ip}/24"
+  ipv4_address     = "${local.adguard_host_ip}/24"
   ipv4_gateway     = "192.168.1.1"
+  dns_servers      = ["192.168.1.1"]
   ssh_authorized_keys = [
     trimspace(file(var.ssh_public_key_path)),
     trimspace(data.bitwarden_secret.github_ci_ansible_ssh_public_key.value)
@@ -54,6 +55,7 @@ module "adguard" {
 module "tailscale" {
   source = "./ubuntu_vm"
 
+  depends_on       = [module.adguard]
   proxmox_node     = "proxmox"
   hostname         = "tailscale"
   cpu_cores        = 2
@@ -63,6 +65,7 @@ module "tailscale" {
   start_order      = 1
   ipv4_address     = "192.168.1.105/24"
   ipv4_gateway     = "192.168.1.1"
+  dns_servers      = [local.adguard_host_ip]
   ssh_authorized_keys = [
     trimspace(file(var.ssh_public_key_path)),
     trimspace(data.bitwarden_secret.github_ci_ansible_ssh_public_key.value)
@@ -84,3 +87,59 @@ module "tailscale" {
   ]
 }
 
+module "containers" {
+  source = "./ubuntu_vm"
+
+  depends_on       = [module.adguard]
+  proxmox_node     = "proxmox"
+  hostname         = "containers"
+  cpu_cores        = 4
+  dedicated_memory = 20480
+  disk_size        = 100
+  disk_import_from = proxmox_virtual_environment_download_file.ubuntu_cloud_image.id
+  start_order      = 1
+  ipv4_address     = "192.168.1.103/24"
+  ipv4_gateway     = "192.168.1.1"
+  dns_servers      = [local.adguard_host_ip]
+  ssh_authorized_keys = [
+    trimspace(file(var.ssh_public_key_path)),
+    trimspace(data.bitwarden_secret.github_ci_ansible_ssh_public_key.value)
+  ]
+  additional_packages = [
+    "nfs-common",
+    "restic",
+    "logrotate",
+    "sqlite3"
+  ]
+  additional_rumcmds = [
+    "apt-get update",
+    "apt-get -y install ca-certificates curl",
+    "install -m 0755 -d /etc/apt/keyrings",
+    "rm -f /etc/apt/keyrings/docker.asc",
+    "curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc",
+    "chmod a+r /etc/apt/keyrings/docker.asc",
+    "rm -f /etc/apt/sources.list.d/docker.list",
+    "echo \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo \"$${UBUNTU_CODENAME:-$VERSION_CODENAME}\") stable\" | tee /etc/apt/sources.list.d/docker.list > /dev/null",
+    "apt-get update",
+    "apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin",
+    "mkdir -p /etc/docker/",
+    indent(4, "|\ncat > /etc/docker/daemon.json <<'EODC'\n${file("${path.module}/docker-config.json")}\nEODC"),
+    "systemctl restart docker",
+    "mount -a"
+  ]
+  mounts = [
+    "['192.168.1.101:/mnt/nvme/nvme/AppData/jellyfin', '/mnt/jellyfin', 'nfs', 'defaults,_netdev', '0', '0']",
+    "['192.168.1.101:/mnt/nvme/nvme/Audiobooks', '/mnt/Audiobooks', 'nfs', 'defaults,_netdev', '0', '0']",
+    "['192.168.1.101:/mnt/nvme/nvme/EBooks', '/mnt/EBooks', 'nfs', 'defaults,_netdev', '0', '0']",
+    "['192.168.1.101:/mnt/nvme/nvme/Movies', '/mnt/Movies', 'nfs', 'defaults,_netdev', '0', '0']",
+    "['192.168.1.101:/mnt/nvme/nvme/TV', '/mnt/TV', 'nfs', 'defaults,_netdev', '0', '0']",
+    "['192.168.1.101:/mnt/nvme/nvme/Videos', '/mnt/Videos', 'nfs', 'defaults,_netdev', '0', '0']",
+    "['192.168.1.101:/mnt/nvme/nvme/Pictures/immich', '/mnt/immich', 'nfs', 'defaults,_netdev', '0', '0']"
+  ]
+  ufw_allow_rules = [
+    "ssh",
+    "http",
+    "https",
+    "51820/udp"
+  ]
+}

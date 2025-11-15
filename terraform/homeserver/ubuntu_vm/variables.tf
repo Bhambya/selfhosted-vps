@@ -38,6 +38,11 @@ variable "ipv4_gateway" {
   description = "The IPv4 gateway"
 }
 
+variable "dns_servers" {
+  type        = list(string)
+  description = "(Optional) The list of DNS servers"
+}
+
 variable "additional_packages" {
   type        = list(string)
   description = "Additional packages to be installed during cloud-init"
@@ -47,6 +52,12 @@ variable "additional_packages" {
 variable "additional_rumcmds" {
   type        = list(string)
   description = "Additional commands to run during cloud-init"
+  default     = []
+}
+
+variable "mounts" {
+  type        = list(string)
+  description = "Lines in mounts for cloud-init https://cloudinit.readthedocs.io/en/latest/reference/examples.html#adjust-mount-points-mounted"
   default     = []
 }
 

@@ -50,3 +50,39 @@ module "adguard" {
     "51820/udp",
   ]
 }
+
+module "tailscale" {
+  source = "./ubuntu_vm"
+
+  proxmox_node     = "proxmox"
+  hostname         = "tailscale"
+  cpu_cores        = 2
+  dedicated_memory = 512
+  disk_size        = 4
+  disk_import_from = proxmox_virtual_environment_download_file.ubuntu_cloud_image.id
+  start_order      = 1
+  ipv4_address     = "192.168.1.105/24"
+  ipv4_gateway     = "192.168.1.1"
+  ssh_authorized_keys = [
+    trimspace(file(var.ssh_public_key_path)),
+    trimspace(data.bitwarden_secret.github_ci_ansible_ssh_public_key.value)
+  ]
+  additional_rumcmds = [
+    # One-command install, from https://tailscale.com/download/
+    "curl -fsSL https://tailscale.com/install.sh | sh",
+    # Set sysctl settings for IP forwarding (useful when configuring an exit node)
+    "echo 'net.ipv4.ip_forward = 1' | tee -a /etc/sysctl.d/99-tailscale.conf",
+    "echo 'net.ipv6.conf.all.forwarding = 1' | tee -a /etc/sysctl.d/99-tailscale.conf",
+    "sysctl -p /etc/sysctl.d/99-tailscale.conf",
+    # Register tailscale node using auth-key.
+    # NOTE: This command hangs until you approve the node in tailscale admin UI
+    "tailscale up --auth-key=${data.bitwarden_secret.tailscale_auth_key.value}",
+    # (Optional) Include this line to configure this machine as an exit node
+    "tailscale set --advertise-exit-node --advertise-routes=192.168.1.0/24 --hostname home-network-exit-node"
+  ]
+  ufw_allow_rules = [
+    "ssh",
+    "51820/udp"
+  ]
+}
+

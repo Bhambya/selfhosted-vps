@@ -5,3 +5,7 @@ data "bitwarden_secret" "adguard_admin_password_hash" {
 data "bitwarden_secret" "github_ci_ansible_ssh_public_key" {
   id = "6bf6e13d-dfca-4651-9b96-b39000d944b0"
 }
+
+data "bitwarden_secret" "tailscale_auth_key" {
+  id = "473fe070-ea84-4cfe-8d07-b396007420e1"
+}

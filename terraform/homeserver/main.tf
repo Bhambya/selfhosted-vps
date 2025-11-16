@@ -30,6 +30,7 @@ module "adguard" {
   disk_size        = 4
   disk_import_from = proxmox_virtual_environment_download_file.ubuntu_cloud_image.id
   start_order      = 1
+  up_delay         = 30
   ipv4_address     = "${local.adguard_host_ip}/24"
   ipv4_gateway     = "192.168.1.1"
   dns_servers      = ["192.168.1.1"]
@@ -87,6 +88,35 @@ module "tailscale" {
   ]
 }
 
+module "wireguard-router" {
+  source = "./ubuntu_vm"
+
+  depends_on       = [module.adguard]
+  proxmox_node     = "proxmox"
+  hostname         = "wireguard-router"
+  cpu_cores        = 2
+  dedicated_memory = 512
+  disk_size        = 4
+  disk_import_from = proxmox_virtual_environment_download_file.ubuntu_cloud_image.id
+  start_order      = 1
+  up_delay         = 30
+  ipv4_address     = "192.168.1.104/24"
+  ipv4_gateway     = "192.168.1.1"
+  dns_servers      = [local.adguard_host_ip]
+  ssh_authorized_keys = [
+    trimspace(file(var.ssh_public_key_path)),
+    trimspace(data.bitwarden_secret.github_ci_ansible_ssh_public_key.value)
+  ]
+  additional_rumcmds = [
+    # Set sysctl settings for IP forwarding
+    "echo 'net.ipv4.ip_forward = 1' | tee -a /etc/sysctl.d/99-allow-forwarding.conf && echo 'net.ipv6.conf.all.forwarding = 1' | tee -a /etc/sysctl.d/99-allow-forwarding.conf && sysctl -p /etc/sysctl.d/99-allow-forwarding.conf",
+  ]
+  ufw_allow_rules = [
+    "ssh",
+    "51820/udp"
+  ]
+}
+
 module "containers" {
   source = "./ubuntu_vm"
 
@@ -97,7 +127,7 @@ module "containers" {
   dedicated_memory = 20480
   disk_size        = 100
   disk_import_from = proxmox_virtual_environment_download_file.ubuntu_cloud_image.id
-  start_order      = 1
+  start_order      = 3 # so that it comes up after Truenas
   ipv4_address     = "192.168.1.103/24"
   ipv4_gateway     = "192.168.1.1"
   dns_servers      = [local.adguard_host_ip]

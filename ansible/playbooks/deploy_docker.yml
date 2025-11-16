@@ -25,7 +25,7 @@
         marker: "# {mark} VPN hosts (Ansible managed)"
         block: |
           {% for vm in groups['home_vpn'] %}
-          {{ vm.vpn_ip }} {{ vm.inventory_hostname }}
+          {{ hostvars[vm].vpn_ip }} {{ hostvars[vm].inventory_hostname }}
           {% endfor %}
 
     - name: "Check {{ docker_data_dir }} directory"

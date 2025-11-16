@@ -50,12 +50,6 @@
         - github-release-monitor
         - filebrowser
 
-    - name: Configure Wireguard VPN
-      ansible.builtin.include_role:
-        name: setup_vpn
-      vars:
-        current_host: "gateway"
-
     - name: Read secret mapping
       ansible.builtin.slurp:
         src: "{{ secrets_mapping_file }}"

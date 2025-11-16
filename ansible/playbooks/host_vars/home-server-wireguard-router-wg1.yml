@@ -2,7 +2,7 @@
 vpn_ip: "10.13.14.2"
 home_network_address: "192.168.1.104"
 ansible_host: "{{ home_network_address if in_home_network is defined and in_home_network | bool else vpn_ip }}"
-ansible_ssh_common_args: "{{ '' if in_home_network is defined and in_home_network | bool else ('-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand=\"ssh -W %h:%p -q ' + jump_host_from_internet + '\"')  }}"
+ansible_ssh_common_args: "{{ '' if in_home_network is defined and in_home_network | bool else ('-o ForwardAgent=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand=\"ssh -W %h:%p -q ' + jump_host_from_internet + '\"')  }}"
 wireguard_endpoint: "" # it does not have a public IP nor port
 wireguard_interface: wg1
 wireguard_allowed_ips: "10.13.14.0/24"

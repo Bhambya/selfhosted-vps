@@ -129,7 +129,7 @@ endpoints:
         send-on-resolved: true
 
   - name: "Home reverse-proxy reachability"
-    url: "https://10.13.14.1/"
+    url: "https://10.13.14.4/"
     client:
       insecure: true
     interval: 60s

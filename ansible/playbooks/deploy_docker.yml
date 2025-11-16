@@ -17,6 +17,17 @@
         update: true
         force: false
 
+    - name: Write VPN hosts to /etc/hosts
+      become: true
+      ansible.builtin.blockinfile:
+        path: /etc/hosts
+        state: present
+        marker: "# {mark} VPN hosts (Ansible managed)"
+        block: |
+          {% for vm in groups['home_vpn'] %}
+          {{ vm.vpn_ip }} {{ vm.inventory_hostname }}
+          {% endfor %}
+
     - name: "Check {{ docker_data_dir }} directory"
       ansible.builtin.stat:
         path: "{{ docker_data_dir }}"

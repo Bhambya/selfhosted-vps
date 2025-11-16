@@ -60,7 +60,7 @@ jobs:
           BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
           ANSIBLE_CONFIG: ansible/ansible.cfg
         run: |
-          ansible-playbook \
-           -i "gateway," \
+          ansible-playbook -i ansible/inventory.yml \
+           -l 'gateway' \
            -e "local_repo_path=$GITHUB_WORKSPACE" \
            ansible/playbooks/deploy_docker.yml

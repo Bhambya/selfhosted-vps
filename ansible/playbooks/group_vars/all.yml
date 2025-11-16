@@ -1,9 +1,3 @@
 ---
 ansible_user: ubuntu
 jump_host_from_internet: "{{  hostvars['gateway'].ansible_user }}@{{ hostvars['gateway'].ansible_host }}"
-vpn_ips:
-  subnet_home:
-    home-server-adguard: '10.13.14.4/32'
-    home-server-containers: '10.13.14.3/32'
-    home-server-wireguard-router: '10.13.14.1/32'
-    home-server-tailscale: '10.13.14.2/32'

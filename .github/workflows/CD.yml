@@ -37,6 +37,7 @@ jobs:
           access_token: ${{ secrets.BWS_ACCESS_TOKEN }}
           secrets: |
             38c9a270-f749-436d-bdff-b39000d8fd77 > ANSIBLE_SSH_KEY
+            ae8d79f6-fb4a-434c-94f2-b3860149c5ec > VPS_HOST
 
       # Load the SSH private key into the ssh-agent
       - name: 🔑 Load SSH Key

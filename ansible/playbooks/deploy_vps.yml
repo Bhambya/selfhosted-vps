@@ -4,7 +4,7 @@
   vars:
     repo_path: "/home/{{ ansible_user }}/selfhosted-vps"
     host_conf_path: "{{ repo_path }}/hosts/vps"
-    secrets_mapping_file: "{{ repo_path }}/ansible/secret-mappings.yml"
+    secrets_mapping_file: "{{ host_conf_path }}/secret-mappings.yml"
     github_workdir: "{{ lookup('ansible.builtin.env', 'GITHUB_WORKSPACE') }}"
     docker_data_dir: "/var/lib/docker-data"
   environment:

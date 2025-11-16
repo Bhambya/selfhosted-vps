@@ -13,7 +13,7 @@
 - name: Write .env file to target host
   become: true
   ansible.builtin.copy:
-    dest: "{{ repo_path }}/{{ env_file['relative_path'] }}"
+    dest: "{{ host_conf_path }}/{{ env_file['relative_path'] }}"
     content: |
       {% for item in env_file['fixed'] | dict2items %}
       {{ item.key }}='{{ item.value }}'

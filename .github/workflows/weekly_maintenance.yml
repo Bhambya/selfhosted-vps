@@ -36,6 +36,7 @@ jobs:
           access_token: ${{ secrets.BWS_ACCESS_TOKEN }}
           secrets: |
             38c9a270-f749-436d-bdff-b39000d8fd77 > ANSIBLE_SSH_KEY
+            ae8d79f6-fb4a-434c-94f2-b3860149c5ec > VPS_HOST
 
       # Load the SSH private key into the ssh-agent
       - name: 🔑 Load SSH Key
@@ -43,6 +44,11 @@ jobs:
         with:
           log-public-key: false
           ssh-private-key: ${{ env.ANSIBLE_SSH_KEY }}
+
+      - name: Test proxyhost
+        run: |
+          ssh ubuntu@${VPS_HOST} "echo hi"
+          ssh ubuntu@10.13.14.4 -J ubuntu@${VPS_HOST} "echo 'hi from home'"
 
       - name: 🔨 Patch all hosts
         env:

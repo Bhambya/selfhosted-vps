@@ -45,15 +45,13 @@ jobs:
           log-public-key: false
           ssh-private-key: ${{ env.ANSIBLE_SSH_KEY }}
 
-      - name: Test proxyhost
+      - name: Disable strict host key checking
         run: |
           cat << EOF >> ~/.ssh/config
           Host $VPS_HOST
             StrictHostKeyChecking no
             UserKnownHostsFile /dev/null
           EOF
-          ssh ubuntu@${VPS_HOST} "echo hi"
-          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@10.13.14.4 -J ubuntu@${VPS_HOST} "echo 'hi from home'"
 
       - name: 🔨 Patch all hosts
         env:

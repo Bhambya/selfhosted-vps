@@ -45,6 +45,14 @@ jobs:
           log-public-key: false
           ssh-private-key: ${{ env.ANSIBLE_SSH_KEY }}
 
+      - name: Disable strict host key checking
+        run: |
+          cat << EOF >> ~/.ssh/config
+          Host $VPS_HOST
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+          EOF
+
       # Run the Ansible playbook
       - name: 🅰 Run Ansible Playbook
         env:

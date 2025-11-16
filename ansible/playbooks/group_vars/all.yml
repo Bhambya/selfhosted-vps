@@ -1,6 +1,5 @@
 ---
 ansible_user: ubuntu
-wireguard_conf_backup: true
 vpn_ips:
   subnet_home:
     home-server-adguard: '10.13.14.4/32'

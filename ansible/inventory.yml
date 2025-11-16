@@ -14,5 +14,5 @@ gateway_home_router_vpn:
   hosts:
     # Use a different name, and define ansible_host, to avoid mixing of vars without
     # needing to prefix vars with interface name.
-    home-server-containers-wg1:
+    home-server-wireguard-router-wg1:
     gateway:

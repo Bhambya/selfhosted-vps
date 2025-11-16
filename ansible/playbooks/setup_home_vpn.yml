@@ -1,0 +1,6 @@
+---
+- name: Deploy docker containers
+  become: true
+  hosts: home_vpn
+  roles:
+    - githubixx.ansible_role_wireguard

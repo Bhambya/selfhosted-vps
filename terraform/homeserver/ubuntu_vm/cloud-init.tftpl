@@ -38,6 +38,7 @@ write_files:
   - content: |
       [Resolve]
       FallbackDNS=${ipv4_gateway}
+      DNSStubListener=no
     path: /etc/systemd/resolved.conf.d/dns_servers.conf
     permissions: '0644'
 

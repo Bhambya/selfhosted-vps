@@ -1,7 +1,3 @@
-ungrouped:
-  hosts:
-    gateway:
-
 home_vpn:
   hosts:
     home-server-adguard:
@@ -16,3 +12,8 @@ gateway_home_router_vpn:
     # needing to prefix vars with interface name.
     home-server-wireguard-router-wg1:
     gateway:
+
+has_docker:
+  hosts:
+    gateway:
+    home-server-containers:

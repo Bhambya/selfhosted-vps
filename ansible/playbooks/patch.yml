@@ -1,6 +1,7 @@
 ---
 - name: Weekly System Update
   hosts: all
+  serial: "{{ batch_size | default(1) }}"
   become: true
   tasks:
     - name: Update apt cache

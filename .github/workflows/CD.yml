@@ -39,14 +39,14 @@ jobs:
             38c9a270-f749-436d-bdff-b39000d8fd77 > ANSIBLE_SSH_KEY
 
       # Load the SSH private key into the ssh-agent
-      - name: Load SSH Key
+      - name: 🔑 Load SSH Key
         uses: webfactory/ssh-agent@v0.9.1
         with:
           log-public-key: false
           ssh-private-key: ${{ env.ANSIBLE_SSH_KEY }}
 
       # Run the Ansible playbook
-      - name: Run Ansible Playbook
+      - name: 🅰 Run Ansible Playbook
         env:
           BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
           ANSIBLE_CONFIG: ansible/ansible.cfg

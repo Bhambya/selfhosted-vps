@@ -47,8 +47,8 @@ jobs:
 
       - name: Test proxyhost
         run: |
-          ssh ubuntu@${VPS_HOST} "echo hi"
-          ssh ubuntu@10.13.14.4 -J ubuntu@${VPS_HOST} "echo 'hi from home'"
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@${VPS_HOST} "echo hi"
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@10.13.14.4 -J ubuntu@${VPS_HOST} "echo 'hi from home'"
 
       - name: 🔨 Patch all hosts
         env:

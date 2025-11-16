@@ -63,4 +63,4 @@ jobs:
           ansible-playbook -i ansible/inventory.yml \
            -l 'gateway' \
            -e "local_repo_path=$GITHUB_WORKSPACE" \
-           ansible/playbooks/deploy_docker.yml
+           ansible/playbooks/deploy_vps.yml

@@ -1,0 +1,527 @@
+services:
+  traefik:
+    image: 'traefik:v3.6.1'
+    container_name: 'traefik'
+    restart: 'always'
+    security_opt:
+      - 'no-new-privileges:true'
+    networks:
+      proxy:
+      immich:
+      prometheus:
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      - BASE_DOMAIN=${BASE_DOMAIN}
+    command:
+      - --api.dashboard=true
+      - --api.debug=false
+      - --api.insecure=false
+      - --log.level=INFO
+      - --accesslog.filePath=/logs/access.log
+      - --metrics.addInternals=true
+      - --metrics.prometheus.addEntryPointsLabels=true
+      - --metrics.prometheus.addRoutersLabels=true
+      - --metrics.prometheus.entryPoint=http
+      - --providers.docker.endpoint=unix:///var/run/docker.sock
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=proxy
+      - --providers.file.filename=/dynamic.yml
+      - --serverstransport.insecureskipverify=true
+      - --entrypoints.http.address=:80
+      - --entrypoints.http.http.redirections.entrypoint.to=https
+      - --entrypoints.http.http.redirections.entrypoint.scheme=https
+      - --entrypoints.http.http.redirections.entrypoint.permanent=true
+      - --entrypoints.https.address=:443
+      - --entrypoints.https.transport.respondingtimeouts.readtimeout=600s
+      - --entrypoints.https.transport.respondingtimeouts.idletimeout=600s
+      - --entrypoints.https.transport.respondingtimeouts.writetimeout=600s
+      - --entrypoints.https.http.tls.certresolver=cloudflare
+      - --certificatesresolvers.cloudflare.acme.storage=/data/acme.json
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers=1.1.1.1:53,1.0.0.1:53
+      - "--certificatesResolvers.cloudflare.acme.email=${CF_API_EMAIL}"
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock:ro'
+      - './traefik/config/dynamic.yml:/dynamic.yml:ro'
+      - '/var/lib/docker-data/traefik/data:/data'
+      - '/var/log/traefik:/logs'
+    labels:
+      traefik.enable: 'true'
+      traefik.http.routers.traefik.rule: 'Host(`dashboard.home.${BASE_DOMAIN}`)'
+      traefik.http.routers.traefik.service: 'api@internal'
+      traefik.http.routers.traefik.tls: "true"
+      traefik.http.routers.traefik.tls.certresolver: "cloudflare"
+      traefik.http.routers.traefik.entrypoints: "https"
+
+  whoami:
+    image: 'traefik/whoami:v1.11'
+    restart: 'unless-stopped'
+    container_name: 'whoami'
+    labels:
+      traefik.enable: 'true'
+      traefik.http.routers.whoami.tls: "true"
+      traefik.http.routers.whoami.tls.certresolver: "cloudflare"
+      traefik.http.routers.whoami.entrypoints: "https"
+      traefik.http.routers.whoami.rule: 'Host(`whoami.home.${BASE_DOMAIN}`)'
+    networks:
+      proxy: {}
+
+  immich-server:
+    container_name: immich_server
+    image: ghcr.io/immich-app/immich-server:v2.2.3
+    environment:
+      - DB_PASSWORD=${IMMICH_DB_PASSWORD}
+      - DB_USERNAME=${IMMICH_DB_USERNAME}
+      - DB_DATABASE_NAME=${IMMICH_DB_DATABASE_NAME}
+      - DB_HOSTNAME=immich_database
+    # extends:
+    #   file: hwaccel.transcoding.yml
+    #   service: cpu # set to one of [nvenc, quicksync, rkmpp, vaapi, vaapi-wsl] for accelerated transcoding
+    volumes:
+      # Do not edit the next line. If you want to change the media storage location on your system, edit the value of UPLOAD_LOCATION in the stack.env file
+      - ${IMMICH_UPLOAD_PATH}:/data
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - redis
+      - immich_database
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+    healthcheck:
+      disable: false
+    networks:
+      immich:
+    labels:
+      traefik.enable: 'true'
+      traefik.http.routers.immich.rule: 'Host(`immich.home.${BASE_DOMAIN}`)'
+      traefik.http.routers.immich.tls: "true"
+      traefik.http.routers.immich.tls.certresolver: "cloudflare"
+      traefik.http.routers.immich.entrypoints: "https"
+      traefik.http.services.immich.loadbalancer.server.port: "2283"
+      traefik.docker.network: 'immich'
+
+  immich-machine-learning:
+    container_name: immich_machine_learning
+    # For hardware acceleration, add one of -[armnn, cuda, openvino] to the image tag.
+    # Example tag: ${IMMICH_VERSION:-release}-cuda
+    image: ghcr.io/immich-app/immich-machine-learning:v2.2.3
+    # extends: # uncomment this section for hardware acceleration - see https://immich.app/docs/features/ml-hardware-acceleration
+    #   file: hwaccel.ml.yml
+    #   service: cpu # set to one of [armnn, cuda, openvino, openvino-wsl] for accelerated inference - use the `-wsl` version for WSL2 where applicable
+    volumes:
+      - /var/lib/docker-data/immich/model_cache:/cache
+    restart: always
+    networks:
+      immich:
+    healthcheck:
+      disable: false
+
+  redis:
+    container_name: immich_redis
+    image: docker.io/redis:8.2-alpine@sha256:28c9c4d7596949a24b183eaaab6455f8e5d55ecbf72d02ff5e2c17fe72671d31
+    healthcheck:
+      test: redis-cli ping || exit 1
+    networks:
+      immich:
+    restart: unless-stopped
+
+  immich_database:
+    container_name: immich_database
+    image: ghcr.io/immich-app/postgres:17-vectorchord0.4.3-pgvectors0.3.0
+    environment:
+      POSTGRES_PASSWORD: ${IMMICH_DB_PASSWORD}
+      POSTGRES_USER: ${IMMICH_DB_USERNAME}
+      POSTGRES_DB: ${IMMICH_DB_DATABASE_NAME}
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+    # Uncomment the DB_STORAGE_TYPE: 'HDD' var if your database isn't stored on SSDs
+    # DB_STORAGE_TYPE: 'HDD'
+    volumes:
+      - /var/lib/docker-data/immich/db:/var/lib/postgresql/data
+    networks:
+      immich:
+    restart: unless-stopped
+
+  speedtest:
+    container_name: speedtest
+    image: "ghcr.io/librespeed/speedtest-rust:v1.4.0"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.speedtest.tls: "true"
+      traefik.http.routers.speedtest.tls.certresolver: "cloudflare"
+      traefik.http.routers.speedtest.entrypoints: "https"
+      traefik.http.routers.speedtest.rule: "Host(`speedtest.home.${BASE_DOMAIN}`)"
+      traefik.http.services.speedtest.loadbalancer.server.port: "8080"
+    networks:
+      proxy:
+    restart: "unless-stopped"
+
+  mealie:
+    image: "ghcr.io/mealie-recipes/mealie:v3.5.0"
+    container_name: mealie
+    environment:
+      - "ALLOW_SIGNUP=false"
+      - "PUID=1000"
+      - "PGID=1000"
+      - "TZ=${TZ}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.mealie.rule: "Host(`mealie.home.${BASE_DOMAIN}`)"
+      traefik.http.routers.mealie.tls: "true"
+      traefik.http.routers.mealie.tls.certresolver: "cloudflare"
+      traefik.http.routers.mealie.entrypoints: "https"
+      traefik.http.services.mealie.loadbalancer.server.port: "9000"
+    networks:
+      proxy:
+    restart: "unless-stopped"
+    volumes:
+      - "/var/lib/docker-data/mealie:/app/data"
+
+  qbittorrent:
+    image: ghcr.io/linuxserver/qbittorrent:5.1.2
+    container_name: qbittorrent
+    networks:
+      proxy:
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=${TZ}
+      - WEBUI_PORT=8383
+      - TORRENTING_PORT=6881
+    volumes:
+      - /var/lib/docker-data/qbittorrent/config:/config
+      - ${AUDIOBOOKS_PATH}:/Audiobooks
+      - ${MOVIES_PATH}:/Movies
+      - ${TV_SHOWS_PATH}:/TV
+    ports:
+      - 6881:6881
+      - 6881:6881/udp
+    restart: unless-stopped
+    deploy:
+      resources:
+          limits:
+            memory: 700M
+    labels:
+      traefik.enable: 'true'
+      traefik.http.routers.qbittorrent.rule: 'Host(`qbittorrent.home.${BASE_DOMAIN}`)'
+      traefik.http.routers.qbittorrent.tls: "true"
+      traefik.http.routers.qbittorrent.tls.certresolver: "cloudflare"
+      traefik.http.routers.qbittorrent.entrypoints: "https"
+      traefik.http.services.qbittorrent.loadbalancer.server.port: '8383'
+
+  filebrowser:
+    container_name: 'filebrowser'
+    image: 'gtstef/filebrowser:1.0.1-beta'
+    restart: 'unless-stopped'
+    user: $USER
+    environment:
+      FILEBROWSER_CONFIG: "/config/config.yaml"
+      FILEBROWSER_ADMIN_PASSWORD: $FILEBROWSER_ADMIN_PASSWORD
+    networks:
+      proxy:
+    volumes:
+      - 'filebrowser_data:/home/filebrowser/data'
+      - './filebrowser/config:/config'
+      - '${AUDIOBOOKS_PATH}:/srv/Audiobooks'
+      - '${EBOOKS_PATH}:/srv/EBooks'
+      - '${MOVIES_PATH}:/srv/Movies'
+      - "${VIDEOS_PATH}:/srv/Videos"
+    labels:
+      traefik.enable: 'true'
+      traefik.http.routers.filebrowser.rule: 'Host(`filebrowser.home.${BASE_DOMAIN}`)'
+      traefik.http.services.filebrowser.loadbalancer.server.port: '80'
+      traefik.http.routers.filebrowser.tls: "true"
+      traefik.http.routers.filebrowser.tls.certresolver: "cloudflare"
+      traefik.http.routers.filebrowser.entrypoints: "https"
+
+  jellyfin:
+    image: "ghcr.io/linuxserver/jellyfin:10.11.2"
+    container_name: jellyfin
+    environment:
+      - "PUID=1000"
+      - "PGID=1000"
+      - "TZ=${TZ}"
+      - "JELLYFIN_PublishedServerUrl=https://jellyfin.${BASE_DOMAIN}"
+    networks:
+      proxy:
+    ports:
+      - "1900:1900/udp"
+      - "7359:7359/udp"
+      - "8096:8096/tcp"
+      - "8920:8920/tcp"
+    restart: unless-stopped
+    volumes:
+      - "${JELLYFIN_CONFIG_PATH}:/config"
+      - "${MOVIES_PATH}:/data/movies"
+      - "${TV_SHOWS_PATH}:/data/tv"
+      - "${VIDEOS_PATH}:/data/videos"
+#    devices:
+#      # for iGPU access: https://jellyfin.org/docs/general/post-install/transcoding/hardware-acceleration/intel
+#      - "/dev/dri:/dev/dri" 
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.jellyfin.rule: "Host(`jellyfin.home.${BASE_DOMAIN}`) || Host(`jellyfin.${BASE_DOMAIN}`)"
+      traefik.http.services.jellyfin.loadbalancer.server.port: "8096"
+      traefik.http.services.jellyfin.loadbalancer.server.scheme: "http"
+      traefik.http.routers.jellyfin.tls: "true"
+      traefik.http.routers.jellyfin.tls.certresolver: "cloudflare"
+      traefik.http.routers.jellyfin.entrypoints: "https"
+
+  watchtower:
+    image: "beatkind/watchtower:2.3.2"
+    container_name: "watchtower"
+    restart: "unless-stopped"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    environment:
+      TZ: ${TZ}
+      WATCHTOWER_SCHEDULE: "0 0 4 * * 0" # every Sunday 4 AM
+      WATCHTOWER_INCLUDE_RESTARTING: true
+      WATCHTOWER_INCLUDE_STOPPED: true
+      WATCHTOWER_MONITOR_ONLY: true
+      WATCHTOWER_NOTIFICATION_REPORT: true
+      WATCHTOWER_NOTIFICATION_URL: "telegram://${ALERTING_TELEGRAM_BOT_TOKEN}@telegram/?chats=${ALERTING_TELEGRAM_CHAT_ID}"
+      WATCHTOWER_NOTIFICATION_TEMPLATE: |2
+        {{- if .Report -}}
+          {{- with .Report -}}
+            {{- if ( or .Stale .Failed ) -}}
+        Home server:{{"\n"}}
+        {{len .Scanned}} Scanned, {{len .Stale}} Stale, {{len .Failed}} Failed
+              {{- range .Stale}}
+        - {{.Name}} ({{.ImageName}}): {{.CurrentImageID.ShortID}} updated to {{.LatestImageID.ShortID}}
+              {{- end -}}
+              {{- range .Failed}}
+        - {{.Name}} ({{.ImageName}}): {{.State}}: {{.Error}}
+              {{- end -}}
+            {{- end -}}
+          {{- end -}}
+        {{- else -}}
+          {{range .Entries -}}{{.Message}}{{"\n"}}{{- end -}}
+        {{- end -}}
+
+  gatus:
+    image: ghcr.io/twin/gatus:v5.31.0
+    container_name: gatus
+    networks:
+      proxy:
+      prometheus:
+    restart: unless-stopped
+    environment:
+      - BASE_DOMAIN=${BASE_DOMAIN}
+      - VPS_IP=${VPS_IP}
+      - ALERTING_TELEGRAM_BOT_TOKEN=$ALERTING_TELEGRAM_BOT_TOKEN
+      - ALERTING_TELEGRAM_CHAT_ID=$ALERTING_TELEGRAM_CHAT_ID
+    volumes:
+      - "./gatus/config.yaml:/config/config.yaml:ro"
+      - "/var/lib/docker-data/gatus/:/data/"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.gatus.rule: "Host(`gatus.home.${BASE_DOMAIN}`)"
+      traefik.http.services.gatus.loadbalancer.server.port: "8080"
+      traefik.http.routers.gatus.tls: "true"
+      traefik.http.routers.gatus.tls.certresolver: "cloudflare"
+      traefik.http.routers.gatus.entrypoints: "https"
+
+  grafana:
+    image: "grafana/grafana:12.2"
+    container_name: grafana
+    user: root
+    networks:
+      proxy:
+      prometheus:
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+      GF_ENABLE_GZIP: true
+      GF_SERVER_ROOT_URL: 'https://grafana.home.${BASE_DOMAIN}'
+      GF_AUTH_BASIC_ENABLED: true
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
+      GF_PLUGINS_PREINSTALL: "grafana-exploretraces-app, grafana-lokiexplore-app, grafana-metricsdrilldown-app, grafana-pyroscope-app"
+      TELEGRAM_BOT_TOKEN: ${ALERTING_TELEGRAM_BOT_TOKEN}
+      TELEGRAM_CHAT_ID: ${ALERTING_TELEGRAM_CHAT_ID}
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - "./grafana/dashboards:/dashboards:ro"
+      - "/var/lib/docker-data/grafana:/var/lib/grafana"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.grafana.rule: "Host(`grafana.home.${BASE_DOMAIN}`)"
+      traefik.http.services.grafana.loadbalancer.server.port: "3000"
+      traefik.http.routers.grafana.tls: "true"
+      traefik.http.routers.grafana.tls.certresolver: "cloudflare"
+      traefik.http.routers.grafana.entrypoints: "https"
+
+  prometheus:
+    image: "prom/prometheus:v3.7.3"
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    networks:
+      prometheus:
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prom_data:/prometheus
+
+  node_exporter:
+    image: "quay.io/prometheus/node-exporter:v1.10.2"
+    container_name: node_exporter
+    restart: unless-stopped
+    networks:
+      - prometheus
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.53.0
+    restart: unless-stopped
+    devices:
+      - /dev/kmsg
+    privileged: true
+    container_name: cadvisor
+    networks:
+      prometheus:
+    volumes:
+      - "/dev/disk/:/dev/disk:ro"
+      - "/var/lib/docker/:/var/lib/docker:ro"
+      - "/sys:/sys:ro"
+      - "/var/run:/var/run:ro"
+      - "/:/rootfs:ro"
+
+  backrest:
+    image: "garethgeorge/backrest:v1.10.1"
+    container_name: backrest
+    networks:
+      proxy:
+    restart: unless-stopped
+    volumes:
+      - /var/lib/docker-data/backrest/data:/data/
+      - /var/lib/docker-data/backrest/config:/config/
+      - /var/lib/docker-data/backrest/cache:/cache/
+      # backup paths
+      - /var/lib/docker-data/apprise/config:/var/lib/docker-data/apprise/config/:ro
+      - /var/lib/docker-data/backrest/config:/var/lib/docker-data/backrest/config/:ro
+      - /var/lib/docker-data/pinchflat/config:/var/lib/docker-data/pinchflat/config/:ro
+      - /var/lib/docker-data/mealie:/var/lib/docker-data/mealie/:ro
+      - /var/lib/docker-data/audiobookshelf:/var/lib/docker-data/audiobookshelf/:ro
+      - /var/lib/docker-data/qbittorrent:/var/lib/docker-data/qbittorrent/:ro
+      - ${IMMICH_UPLOAD_PATH}/backups:/immich/backups:ro
+      # immich - very large data
+      - ${IMMICH_UPLOAD_PATH}/library:/immich/library:ro
+      - ${IMMICH_UPLOAD_PATH}/profile:/immich/profile:ro
+      # credentials
+      - ./restic-immich-backup-key.json:/creds/restic-immich-backup-key.json:ro
+    environment:
+      TZ: ${TIME_ZONE}
+      BACKREST_DATA: /data
+      BACKREST_CONFIG: /config/config.json
+      XDG_CACHE_HOME: /cache
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.backrest.rule: "Host(`backrest.home.${BASE_DOMAIN}`)"
+      traefik.http.services.backrest.loadbalancer.server.port: "9898"
+      traefik.http.routers.backrest.tls: "true"
+      traefik.http.routers.backrest.tls.certresolver: "cloudflare"
+      traefik.http.routers.backrest.entrypoints: "https"
+
+  excalidraw:
+    image: 'excalidraw/excalidraw:latest'
+    restart: unless-stopped
+    container_name: excalidraw
+    networks:
+      proxy:
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.excalidraw.rule: "Host(`excalidraw.home.${BASE_DOMAIN}`)"
+      traefik.http.services.excalidraw.loadbalancer.server.port: "80"
+      traefik.http.routers.excalidraw.tls: "true"
+      traefik.http.routers.excalidraw.tls.certresolver: "cloudflare"
+      traefik.http.routers.excalidraw.entrypoints: "https"
+
+  pinchflat:
+    image: ghcr.io/kieraneglin/pinchflat:v2025.6.6
+    container_name: pinchflat
+    restart: unless-stopped
+    environment:
+      TZ: ${TIME_ZONE}
+      BASIC_AUTH_USERNAME: ${PINCHFLAT_BASIC_AUTH_USERNAME}
+      BASIC_AUTH_PASSWORD: ${PINCHFLAT_BASIC_AUTH_PASSWORD}
+    volumes:
+      - /var/lib/docker-data/pinchflat/config:/config
+      - ${VIDEOS_PATH}/YouTube:/downloads/
+    networks:
+      proxy:
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.pinchflat.rule: "Host(`pinchflat.home.${BASE_DOMAIN}`)"
+      traefik.http.services.pinchflat.loadbalancer.server.port: "8945"
+      traefik.http.routers.pinchflat.tls: "true"
+      traefik.http.routers.pinchflat.tls.certresolver: "cloudflare"
+      traefik.http.routers.pinchflat.entrypoints: "https"
+
+  apprise:
+    image: "caronc/apprise:1.2"
+    container_name: apprise
+    networks:
+      proxy:
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    volumes:
+      - /var/lib/docker-data/apprise/config:/config/
+    ports:
+      - "127.0.0.1:8000:8000" # for sending cron messages
+    labels:
+      traefik.enable: "false" # enable to enable the webui or remote access
+      traefik.http.routers.apprise.rule: "Host(`apprise.home.${BASE_DOMAIN}`)"
+      traefik.http.services.apprise.loadbalancer.server.port: "8000"
+      traefik.http.routers.apprise.tls: "true"
+      traefik.http.routers.apprise.tls.certresolver: "cloudflare"
+      traefik.http.routers.apprise.entrypoints: "https"
+
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:2.30.0
+    container_name: audiobookshelf
+    networks:
+      proxy:
+    volumes:
+      - ${AUDIOBOOKS_PATH}:/audiobooks
+      - /var/lib/docker-data/audiobookshelf/config:/config
+      - /var/lib/docker-data/audiobookshelf/metadata:/metadata
+    environment:
+      TZ: ${TIME_ZONE}
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.audiobookshelf.rule: "Host(`audiobookshelf.home.${BASE_DOMAIN}`)"
+      traefik.http.services.audiobookshelf.loadbalancer.server.port: "80"
+      traefik.http.routers.audiobookshelf.tls: "true"
+      traefik.http.routers.audiobookshelf.tls.certresolver: "cloudflare"
+      traefik.http.routers.audiobookshelf.entrypoints: "https"
+
+networks:
+  proxy:
+    name: 'proxy'
+  immich:
+    name: 'immich'
+  prometheus:
+
+volumes:
+  prom_data:
+  filebrowser_data:

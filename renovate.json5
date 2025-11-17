@@ -4,7 +4,6 @@
     "config:recommended"
   ],
   "timezone": "UTC",
-  "minimumReleaseAge": "3 days", 
   "prConcurrentLimit": 30,
   "prHourlyLimit": 10,
   "labels": [
@@ -19,6 +18,15 @@
   ],
   "platformAutomerge": false,
   "automerge": false,
+  "major": {
+    "automerge": false
+  },
+  "minor": {
+    "automerge": false
+  },
+  "patch": {
+    "automerge": false
+  },
   "vulnerabilityAlerts": {
     "enabled": true,
     "labels": [
@@ -43,6 +51,16 @@
         "docker"
       ],
       "groupName": "Docker images"
+    },
+    {
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/immich-app/postgres"
+      ],
+      // need to match the version like: 16.3-vectorchord0.3.0. We only care about the postgres version.
+      "versioning": "regex:^(?<major>\\d+)(\\.(?<minor>\\d+))?(\\.(?<patch>\\d+))?(\\.(?<build>\\d+))?-(?<compatibility>[[:alpha:]]+).+$"
     },
     {
       "description": "Separate security updates for faster processing",
@@ -123,6 +141,33 @@
       "groupName": "Monitoring tools"
     },
     {
+      "description": "Immich",
+      "matchPackageNames": [
+        "ghcr.io/immich-app/immich-server",
+        "ghcr.io/immich-app/immich-machine-learning",
+        "docker.io/redis",
+        "ghcr.io/immich-app/postgres"
+      ],
+      "labels": [
+        "immich"
+      ],
+      "groupName": "Immich"
+    },
+    {
+      "description": "Media management tools",
+      "matchPackageNames": [
+        "ghcr.io/kieraneglin/pinchflat",
+        "ghcr.io/advplyr/audiobookshelf",
+        "ghcr.io/linuxserver/jellyfin",
+        "ghcr.io/linuxserver/qbittorrent",
+        "gtstef/filebrowser"
+      ],
+      "labels": [
+        "document-management"
+      ],
+      "groupName": "Document management"
+    },
+    {
       "description": "Security and access control tools",
       "matchPackageNames": [
         "crowdsecurity/crowdsec",
@@ -161,9 +206,24 @@
         "backup-maintenance"
       ],
       "groupName": "Backup and maintenance"
+    },
+    {
+      "description": "Ignore old jellyfin year based versions",
+      "matchPackageNames": [
+        "ghcr.io/linuxserver/jellyfin"
+      ],
+      "allowedVersions": "!/^20\\d\\d\\./"
+    },
+    {
+      "description": "Ignore old qbittorrent version which is higher in value!!",
+      "matchPackageNames": [
+        "ghcr.io/linuxserver/qbittorrent"
+      ],
+      // ignore versions like 20.04.1 or 14.3.9
+      "allowedVersions": "!/^(20|14)\\./"
     }
   ],
-  "prBodyTemplate": "This PR updates Docker images in your self-hosted VPS setup.\n\n{{{table}}}\n\n{{{notes}}}\n\n---\n\n🤖 This PR was generated automatically by Renovate Bot.\n\n**Before merging:**\n- [ ] Review the changelog/release notes for breaking changes\n- [ ] Test the updated services in a staging environment if possible\n- [ ] Ensure backup procedures are in place\n- [ ] Monitor services after deployment\n\n**Deployment notes:**\n- Run `docker compose -f docker/compose.yml pull` to pull new images\n- Run `docker compose -f docker/compose.yml up -d` to restart services with new images\n- Check service health with `docker compose -f docker/compose.yml ps`",
+  "prBodyTemplate": "This PR updates dependencies.\n\n{{{table}}}\n\n{{{notes}}}\n\n---\n\n🤖 This PR was generated automatically by Renovate Bot.\n\n**Before merging:**\n- [ ] Review the changelog/release notes for breaking changes\n- [ ] Test the updated services in a staging environment if possible\n- [ ] Ensure backup procedures are in place\n- [ ] Monitor services after deployment\n\n**Deployment notes:**\n- Run `docker compose -f docker/compose.yml pull` to pull new images\n- Run `docker compose -f docker/compose.yml up -d` to restart services with new images\n- Check service health with `docker compose -f docker/compose.yml ps`",
   "commitMessageTopic": "{{#if groupName}}{{groupName}}{{else}}{{depName}}{{/if}}",
   "commitMessageAction": "update",
   "commitMessageExtra": "{{#if updateType}} ({{updateType}}){{/if}}{{#if newValue}} to {{#if isMajor}}v{{newMajor}}{{else}}{{#if isSingleVersion}}v{{newVersion}}{{else}}{{newValue}}{{/if}}{{/if}}{{/if}}",

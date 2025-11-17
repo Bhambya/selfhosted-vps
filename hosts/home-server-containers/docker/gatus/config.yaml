@@ -1,0 +1,157 @@
+alerting:
+  telegram:
+    token: $ALERTING_TELEGRAM_BOT_TOKEN
+    id: $ALERTING_TELEGRAM_CHAT_ID
+
+storage:
+  type: sqlite
+  path: /data/data.db
+
+metrics: true
+
+endpoints:
+  - name: 'Adguard WebUI'
+    url: "https://adguard.home.${BASE_DOMAIN}/"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "home server: healthcheck failed"
+        send-on-resolved: true
+
+  - name: 'auth.${BASE_DOMAIN}'
+    url: "https://auth.${BASE_DOMAIN}/"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "home server: healthcheck failed"
+        send-on-resolved: true
+
+  - name: filebrowser
+    url: "https://filebrowser.home.${BASE_DOMAIN}/"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "home server: healthcheck failed"
+        send-on-resolved: true
+
+  - name: immich
+    url: "https://immich.home.${BASE_DOMAIN}/"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "home server: healthcheck failed"
+        send-on-resolved: true
+
+  - name: Jellyfin
+    url: "https://jellyfin.home.${BASE_DOMAIN}/"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "home server: healthcheck failed"
+        send-on-resolved: true
+
+  - name: Mealie
+    url: "https://mealie.home.${BASE_DOMAIN}/"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "home server: healthcheck failed"
+        send-on-resolved: true
+
+  - name: qbittorrent
+    url: "https://qbittorrent.home.${BASE_DOMAIN}/"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "home server: healthcheck failed"
+        send-on-resolved: true
+
+  - name: speedtest
+    url: "https://speedtest.home.${BASE_DOMAIN}/"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "home server: healthcheck failed"
+        send-on-resolved: true
+
+  - name: 'Traefik dashboard'
+    url: "https://dashboard.home.${BASE_DOMAIN}/dashboard/"
+    interval: 60s
+    conditions:
+      - "[STATUS] == 200"
+    alerts:
+      - type: telegram
+        description: "home server: healthcheck failed"
+        send-on-resolved: true
+
+  - name: 'Adguard DNS server'
+    url: '192.168.1.107'
+    interval: 60s
+    dns:
+      query-name: "containers"
+      query-type: "A"
+    conditions:
+      - "[DNS_RCODE] == NOERROR"
+    alerts:
+      - type: telegram
+        description: "home server: healthcheck failed"
+        send-on-resolved: true
+
+  - name: 'Internet check'
+    url: '1.1.1.1'
+    interval: 60s
+    dns:
+      query-name: "cloudflare.com"
+      query-type: "A"
+    conditions:
+      - "[DNS_RCODE] == NOERROR"
+    alerts:
+      - type: telegram
+        description: "home server: healthcheck failed"
+        send-on-resolved: true
+
+  - name: 'Tailscale host ping'
+    url: "icmp://192.168.1.105"
+    interval: 60s
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: telegram
+        description: "home server: healthcheck failed"
+        send-on-resolved: true
+
+  - name: 'Wireguard host ping'
+    url: "icmp://wireguard.local"
+    interval: 60s
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: telegram
+        description: "home server: healthcheck failed"
+        send-on-resolved: true
+
+  - name: 'VPS ping'
+    url: "tcp://${VPS_IP}:443"
+    interval: 60s
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: telegram
+        description: "home server: healthcheck failed"
+        send-on-resolved: true

@@ -1,6 +1,6 @@
 ---
 - name: Deploy docker containers
-  hosts: all
+  hosts: gateway
   vars:
     repo_path: "/home/{{ ansible_user }}/selfhosted-vps"
     host_conf_path: "{{ repo_path }}/hosts/vps"

@@ -15,10 +15,10 @@
   ansible.builtin.copy:
     dest: "{{ host_conf_path }}/{{ env_file['relative_path'] }}"
     content: |
-      {% for item in env_file['fixed'] | dict2items %}
+      {% for item in (env_file['fixed'] | default({})) | dict2items %}
       {{ item.key }}='{{ item.value }}'
       {% endfor %}
-      {% for item in env_file['vars'] | dict2items %}
+      {% for item in (env_file['vars'] | default({})) | dict2items %}
       {{ item.key }}='{{ lookup("vars", item.value) }}'
       {% endfor %}
       {% for key, secret in env_file['secrets'].keys() | zip(write_env_file_bw_secret_output.results) %}

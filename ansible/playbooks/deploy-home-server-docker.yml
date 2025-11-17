@@ -1,0 +1,87 @@
+---
+- name: Deploy docker containers
+  hosts: home-server-containers
+  vars:
+    repo_path: "/home/{{ ansible_user }}/selfhosted-vps"
+    host_conf_path: "{{ repo_path }}/hosts/home-server-containers"
+    secrets_mapping_file: "{{ host_conf_path }}/secret-mappings.yml"
+    github_workdir: "{{ lookup('ansible.builtin.env', 'GITHUB_WORKSPACE') }}"
+    docker_data_dir: "/var/lib/docker-data"
+  environment:
+    PATH: "~/.local/bin:{{ lookup('env', 'PATH') }}"
+  tasks:
+    - name: Ensure repo is in clean state
+      ansible.builtin.git:
+        repo: 'https://github.com/Bhambya/selfhosted-vps.git'
+        dest: "{{ repo_path }}"
+        version: 'main'
+        update: true
+        force: false
+
+    - name: Write VPN hosts to /etc/hosts
+      become: true
+      ansible.builtin.blockinfile:
+        path: /etc/hosts
+        state: present
+        marker: "# {mark} VPN hosts (Ansible managed)"
+        block: |
+          {% for vm in groups['home_vpn'] %}
+          {{ hostvars[vm].vpn_ip }} {{ hostvars[vm].inventory_hostname }}
+          {% endfor %}
+  
+    - name: Change {{ docker_data_dir }} directory owner
+      become: true
+      ansible.builtin.file:
+        path: "{{ docker_data_dir }}"
+        owner: ubuntu
+        state: directory
+        mode: "750"
+
+    - name: Read secret mapping
+      ansible.builtin.slurp:
+        src: "{{ secrets_mapping_file }}"
+      register: secret_mapping_content
+
+    - name: Parse secret mapping
+      ansible.builtin.set_fact:
+        secret_mapping: "{{ secret_mapping_content['content'] | b64decode | from_yaml }}"
+
+    - name: Set env_files
+      ansible.builtin.set_fact:
+        env_files: "{{ secret_mapping['env_files'] | default({}) }}"
+
+    - name: Loop over env_files
+      ansible.builtin.include_role:
+        name: write_env_file
+      loop: "{{ env_files }}"
+      loop_control:
+        loop_var: env_file
+    
+    - name: Loop over secret_files
+      ansible.builtin.include_role:
+        name: write_secret_file
+      loop: "{{ secret_mapping['secret_files'] | default({}) }}"
+      loop_control:
+        loop_var: item
+
+    - name: Restart services using Docker Compose
+      become: true
+      community.docker.docker_compose_v2:
+        project_src: "{{ host_conf_path }}/docker"
+        state: present
+        remove_orphans: true
+        wait: true
+        wait_timeout: 600
+
+    - name: Run Docker Command
+      become: true
+      ansible.builtin.command: "docker compose ps --format 'table {% raw %}{{.Names}}\t{{.RunningFor}}\t{{.Status}}'{% endraw %}"
+      args:
+        chdir: "{{ host_conf_path }}/docker"
+      register: docker_output
+
+    - name: Display Docker Output
+      debug:
+        var: docker_output.stdout_lines
+
+

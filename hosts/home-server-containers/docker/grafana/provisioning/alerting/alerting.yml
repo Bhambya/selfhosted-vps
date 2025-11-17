@@ -1,0 +1,620 @@
+apiVersion: 1
+groups:
+    - orgId: 1
+      name: Five minutes
+      folder: Home server
+      interval: 5m
+      rules:
+        - uid: aekuf7ypu64u8d
+          title: Home server disk usage
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: prometheus
+              model:
+                editorMode: code
+                expr: 1 - avg(node_filesystem_free_bytes{mountpoint="/"}) / avg(node_filesystem_size_bytes{mountpoint="/"})
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+            - refId: B
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params: []
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - B
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: last
+                refId: B
+                type: reduce
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0.7
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: B
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          dashboardUid: main_dashboard
+          panelId: 6
+          noDataState: NoData
+          execErrState: Error
+          for: 5m
+          annotations:
+            __dashboardUid__: main_dashboard
+            __panelId__: "6"
+            description: Home server disk usage is above threshold
+            summary: Home server disk usage is above threshold
+          isPaused: false
+          notification_settings:
+            receiver: Telegram
+        - uid: bekufxred5og0f
+          title: Home server memory usage
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 10800
+                to: 0
+              datasourceUid: prometheus
+              model:
+                adhocFilters: []
+                datasource:
+                    type: prometheus
+                    uid: prometheus
+                disableTextWrap: false
+                editorMode: code
+                exemplar: false
+                expr: 1 - avg(node_memory_MemAvailable_bytes)/ avg(node_memory_MemTotal_bytes)
+                fromExploreMetrics: true
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: false
+                interval: ""
+                intervalMs: 15000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: true
+                refId: A
+                useBackend: false
+            - refId: B
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params: []
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - B
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: last
+                refId: B
+                type: reduce
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0.8
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: B
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          dashboardUid: main_dashboard
+          panelId: 8
+          noDataState: NoData
+          execErrState: Error
+          for: 5m
+          annotations:
+            __dashboardUid__: main_dashboard
+            __panelId__: "8"
+            description: Home server memory usage is high
+            summary: Home server memory usage is high
+          isPaused: false
+          notification_settings:
+            receiver: Telegram
+        - uid: bekugdasbk7wgc
+          title: Total requests
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: prometheus
+              model:
+                adhocFilters: []
+                datasource:
+                    type: prometheus
+                    uid: prometheus
+                disableTextWrap: false
+                editorMode: builder
+                expr: sum(increase(traefik_entrypoint_requests_total[$__rate_interval]))
+                fromExploreMetrics: true
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: false
+                interval: ""
+                intervalMs: 10000
+                legendFormat: Request count
+                maxDataPoints: 43200
+                range: true
+                refId: A
+                useBackend: false
+            - refId: B
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params: []
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - B
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: mean
+                refId: B
+                type: reduce
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 1000
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: B
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          dashboardUid: main_dashboard
+          panelId: 1
+          noDataState: NoData
+          execErrState: Error
+          for: 5m
+          annotations:
+            __dashboardUid__: main_dashboard
+            __panelId__: "1"
+            summary: Too many traefik requests
+          isPaused: false
+          notification_settings:
+            receiver: Telegram
+        - uid: aekujw2cpc2dcb
+          title: CPU usage
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: prometheus
+              model:
+                adhocFilters: []
+                datasource:
+                    type: prometheus
+                    uid: prometheus
+                disableTextWrap: false
+                editorMode: code
+                expr: |-
+                    avg without (mode,cpu,instance,job) (
+                      1 - rate(node_cpu_seconds_total{mode="idle"}[$__rate_interval])
+                    )
+                fullMetaSearch: true
+                includeNullMetadata: true
+                instant: false
+                interval: ""
+                intervalMs: 10000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: true
+                refId: A
+                useBackend: false
+            - refId: B
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params: []
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - B
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: mean
+                refId: B
+                type: reduce
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0.8
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: B
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          dashboardUid: main_dashboard
+          panelId: 9
+          noDataState: NoData
+          execErrState: Error
+          for: 5m
+          annotations:
+            __dashboardUid__: main_dashboard
+            __panelId__: "9"
+            summary: CPU usage is high
+          isPaused: false
+          notification_settings:
+            receiver: Telegram
+        - uid: bekvhq52ns3k0b
+          title: Unauthorized/forbidden responses
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: prometheus
+              model:
+                adhocFilters: []
+                datasource:
+                    type: prometheus
+                    uid: prometheus
+                disableTextWrap: false
+                editorMode: code
+                expr: sum(increase(http_server_request_duration_seconds_count{error_type=~"403|401"}[$__rate_interval]))
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: false
+                interval: ""
+                intervalMs: 10000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: true
+                refId: A
+                useBackend: false
+            - refId: B
+              queryType: expression
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0
+                            - 0
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params: []
+                      reducer:
+                        params: []
+                        type: max
+                      type: query
+                datasource:
+                    name: Expression
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: max
+                refId: B
+                type: reduce
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 100
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: B
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          dashboardUid: main_dashboard
+          panelId: 4
+          noDataState: OK
+          execErrState: Error
+          for: 5m
+          annotations:
+            __dashboardUid__: main_dashboard
+            __panelId__: "4"
+            summary: Increase in unauthorized/forbidden responses
+          labels: {}
+          isPaused: false
+          notification_settings:
+            receiver: Telegram
+        - uid: del6u9zl15eyof
+          title: Container memory limit usage percentage
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 10800
+                to: 0
+              datasourceUid: prometheus
+              model:
+                adhocFilters: []
+                datasource:
+                    type: prometheus
+                    uid: prometheus
+                disableTextWrap: false
+                editorMode: code
+                exemplar: false
+                expr: avg by(container_label_com_docker_compose_service) (container_memory_rss{container_label_com_docker_compose_service!=""}/(container_spec_memory_limit_bytes{container_label_com_docker_compose_service!=""} > 0))
+                fullMetaSearch: false
+                includeNullMetadata: true
+                instant: true
+                interval: ""
+                intervalMs: 15000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+                useBackend: false
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 0.8
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          dashboardUid: main_dashboard
+          panelId: 14
+          noDataState: NoData
+          execErrState: Error
+          for: 5m
+          annotations:
+            __dashboardUid__: main_dashboard
+            __panelId__: "14"
+            summary: Host is reaching its allocated memory limit
+          isPaused: false
+          notification_settings:
+            receiver: Telegram
+        - uid: watchtower_container
+          title: Watchtower container is down
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 300
+                to: 0
+              datasourceUid: prometheus
+              model:
+                editorMode: code
+                expr: time() - (max(container_last_seen{name="watchtower"}) by(name))
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 60
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: Alerting
+          execErrState: Error
+          for: 5m
+          keepFiringFor: 5m
+          isPaused: false
+          notification_settings:
+            receiver: Telegram
+        - uid: immich_machine_learning_container
+          title: immich_machine_learning container is down
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 300
+                to: 0
+              datasourceUid: prometheus
+              model:
+                editorMode: code
+                expr: time() - (max(container_last_seen{name="immich_machine_learning"}) by(name))
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+            - refId: C
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 60
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: Alerting
+          execErrState: Error
+          for: 5m
+          keepFiringFor: 5m
+          isPaused: false
+          notification_settings:
+            receiver: Telegram

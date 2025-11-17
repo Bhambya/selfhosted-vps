@@ -1,4 +1,4 @@
-# selfhosted-vps
+# homelab
 
 My setup for self-hosting a bunch of services on a VPS with a public IP. The VPS also acts as the window to my home server with a dynamic IP. 
 
@@ -40,7 +40,7 @@ Some services are hosted directly on VPS and others are hosted on the home serve
 1. Install [Docker](https://docs.docker.com/engine/install/)
 
 ```bash
-cd selfhosted-vps
+cd homelab
 
 # install logrotate
 sudo apt update

@@ -2,7 +2,7 @@
 - name: Deploy docker containers
   hosts: home-server-containers
   vars:
-    repo_path: "/home/{{ ansible_user }}/selfhosted-vps"
+    repo_path: "/home/{{ ansible_user }}/homelab"
     host_conf_path: "{{ repo_path }}/hosts/home-server-containers"
     secrets_mapping_file: "{{ host_conf_path }}/secret-mappings.yml"
     github_workdir: "{{ lookup('ansible.builtin.env', 'GITHUB_WORKSPACE') }}"
@@ -12,7 +12,7 @@
   tasks:
     - name: Ensure repo is in clean state
       ansible.builtin.git:
-        repo: 'https://github.com/Bhambya/selfhosted-vps.git'
+        repo: 'https://github.com/Bhambya/homelab.git'
         dest: "{{ repo_path }}"
         version: 'main'
         update: true

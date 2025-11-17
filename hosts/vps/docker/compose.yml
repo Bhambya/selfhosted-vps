@@ -145,6 +145,8 @@ services:
       - "--certificatesResolvers.cloudflare.acme.email=${CF_API_EMAIL}"
       - --experimental.plugins.robots-txt.modulename=github.com/solution-libre/traefik-plugin-robots-txt
       - --experimental.plugins.robots-txt.version=v0.2.1
+      - --experimental.plugins.htransformation.modulename=github.com/tomMoulard/htransformation
+      - --experimental.plugins.htransformation.version=v0.4.1
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./traefik/config/dynamic.yml:/dynamic.yml:ro"

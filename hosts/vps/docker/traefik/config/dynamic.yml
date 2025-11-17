@@ -36,32 +36,16 @@ http:
       forwardauth:
         address: http://bouncer-traefik:8080/api/v1/forwardAuth
         trustForwardHeader: true
-    whoami-host-rewrite:
-      headers:
-        customrequestheaders:
-          Host: whoami.home.{{ env "BASE_DOMAIN" }}
     immich-host-rewrite:
       headers:
         customrequestheaders:
           Host: immich.home.{{ env "BASE_DOMAIN" }}
-    proxmox-host-rewrite:
-      headers:
-        customrequestheaders:
-          Host: proxmox.home.{{ env "BASE_DOMAIN" }}
     qbittorrent-host-rewrite:
       headers:
         customrequestheaders:
           Host: qbittorrent.home.{{ env "BASE_DOMAIN" }}
           Origin: https://qbittorrent.home.{{ env "BASE_DOMAIN" }}
           Referer: https://qbittorrent.home.{{ env "BASE_DOMAIN" }}
-    speedtest-host-rewrite:
-      headers:
-        customrequestheaders:
-          Host: speedtest.home.{{ env "BASE_DOMAIN" }}
-    filebrowser-host-rewrite:
-      headers:
-        customrequestheaders:
-          Host: filebrowser.home.{{ env "BASE_DOMAIN" }}
     excalidraw-host-rewrite:
       headers:
         customrequestheaders:
@@ -70,6 +54,16 @@ http:
       headers:
         customrequestheaders:
           Host: audiobookshelf.home.{{ env "BASE_DOMAIN" }}
+    rewriteHomeHostHeader:
+      plugin:
+        htransformation:
+          Rules:
+            - Header: "Host"
+              # Value: '^grafana-home\.{{ env "BASE_DOMAIN" | replace "." "\\." }}$'
+              # ValueReplace: 'grafana.home.{{ env "BASE_DOMAIN" }}'
+              Value:  '^(.+)-home\.{{ env "BASE_DOMAIN" | replace "." "\\." }}$'
+              ValueReplace: '$1.home.{{ env "BASE_DOMAIN" }}'
+              Type: 'RewriteValueRule'
 
   services:
     home:
@@ -78,13 +72,6 @@ http:
           - url: "https://home-server-containers:443" # home server Wireguard peer IP
 
   routers:
-    whoami-home:
-      middlewares:
-        - "whoami-host-rewrite@file"
-      rule: 'Host(`whoami-home.{{ env "BASE_DOMAIN" }}`)'
-      service: home
-      tls:
-        certResolver: cloudflare
     immich-home:
       middlewares:
         - "immich-host-rewrite@file"
@@ -92,25 +79,11 @@ http:
       service: home
       tls:
         certResolver: cloudflare
-    proxmox-home:
-      middlewares:
-        - "proxmox-host-rewrite@file"
-      service: home
-      rule: 'Host(`px-home.{{ env "BASE_DOMAIN" }}`)'
-      tls:
-        certResolver: cloudflare
     qbittorrent-home:
       middlewares:
         - "qbittorrent-host-rewrite@file"
       service: home
       rule: 'Host(`qbittorrent.{{ env "BASE_DOMAIN" }}`)'
-      tls:
-        certResolver: cloudflare
-    speedtest-home:
-      middlewares:
-        - "speedtest-host-rewrite@file"
-      service: home
-      rule: 'Host(`speedtest.{{ env "BASE_DOMAIN" }}`)'
       tls:
         certResolver: cloudflare
     jellyfin-home:
@@ -137,5 +110,13 @@ http:
         - "audiobookshelf-host-rewrite@file"
       service: home
       rule: 'Host(`audiobookshelf.{{ env "BASE_DOMAIN" }}`)'
+      tls:
+        certResolver: cloudflare
+    homeServices:
+      middlewares:
+        - "rewriteHomeHostHeader"
+      service: home
+      rule: 'HostRegexp(`^[a-z]+-home\.{{ env "BASE_DOMAIN" | replace "." "\\." }}$`)'
+      entrypoints: https
       tls:
         certResolver: cloudflare

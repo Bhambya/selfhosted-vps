@@ -73,7 +73,7 @@
 
     - name: Set env_files
       ansible.builtin.set_fact:
-        env_files: "{{ secret_mapping['env_files'] | default({}) }}"
+        env_files: "{{ secret_mapping['env_files'] | default([]) }}"
 
     - name: Loop over env_files
       ansible.builtin.include_role:
@@ -85,7 +85,7 @@
     - name: Loop over secret_files
       ansible.builtin.include_role:
         name: write_secret_file
-      loop: "{{ secret_mapping['secret_files'] | default({}) }}"
+      loop: "{{ secret_mapping['secret_files'] | default([]) }}"
       loop_control:
         loop_var: item
 

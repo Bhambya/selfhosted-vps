@@ -122,7 +122,11 @@ services:
       - --accesslog.fields.names.ClientUsername=drop
       - --accesslog.fields.headers.defaultmode=keep
       - --accesslog.fields.headers.names.User-Agent=redact
+      - --accesslog.fields.headers.names.Remote-Email=redact
+      - --accesslog.fields.headers.names.Cookie=redact
       - --accesslog.fields.headers.names.Authorization=drop
+      - --accesslog.fields.headers.names.Accept-Encoding=drop
+      - --accesslog.fields.headers.names.Accept-Language=drop
       - --metrics.addInternals=true
       - --metrics.prometheus.addEntryPointsLabels=true
       - --metrics.prometheus.addRoutersLabels=true

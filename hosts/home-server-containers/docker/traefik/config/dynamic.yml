@@ -28,22 +28,16 @@ http:
   
   routers:
     proxmox:
-      entrypoints: 
-        - 'https'
       rule: 'Host(`proxmox.home.{{ env "BASE_DOMAIN" }}`)'
       service: 'proxmox'
       tls:
         certresolver: 'cloudflare'
     truenas:
-      entrypoints: 
-        - 'https'
       rule: 'Host(`truenas.home.{{ env "BASE_DOMAIN" }}`)'
       service: 'truenas'
       tls:
         certresolver: 'cloudflare'
     adguard:
-      entrypoints: 
-        - 'https'
       rule: 'Host(`adguard.home.{{ env "BASE_DOMAIN" }}`)'
       service: 'adguard'
       tls:

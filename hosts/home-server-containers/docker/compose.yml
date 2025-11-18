@@ -44,6 +44,7 @@ services:
       - --entrypoints.http.http.redirections.entrypoint.scheme=https
       - --entrypoints.http.http.redirections.entrypoint.permanent=true
       - --entrypoints.https.address=:443
+      - --entrypoints.https.asDefault=true
       - --entrypoints.https.transport.respondingtimeouts.readtimeout=600s
       - --entrypoints.https.transport.respondingtimeouts.idletimeout=600s
       - --entrypoints.https.transport.respondingtimeouts.writetimeout=600s
@@ -63,7 +64,6 @@ services:
       traefik.http.routers.traefik.service: 'api@internal'
       traefik.http.routers.traefik.tls: "true"
       traefik.http.routers.traefik.tls.certresolver: "cloudflare"
-      traefik.http.routers.traefik.entrypoints: "https"
 
   whoami:
     image: 'traefik/whoami:v1.11'
@@ -73,7 +73,6 @@ services:
       traefik.enable: 'true'
       traefik.http.routers.whoami.tls: "true"
       traefik.http.routers.whoami.tls.certresolver: "cloudflare"
-      traefik.http.routers.whoami.entrypoints: "https"
       traefik.http.routers.whoami.rule: 'Host(`whoami.home.${BASE_DOMAIN}`)'
     networks:
       proxy: {}
@@ -110,7 +109,6 @@ services:
       traefik.http.routers.immich.rule: 'Host(`immich.home.${BASE_DOMAIN}`)'
       traefik.http.routers.immich.tls: "true"
       traefik.http.routers.immich.tls.certresolver: "cloudflare"
-      traefik.http.routers.immich.entrypoints: "https"
       traefik.http.services.immich.loadbalancer.server.port: "2283"
       traefik.docker.network: 'immich'
 
@@ -162,7 +160,6 @@ services:
       traefik.enable: "true"
       traefik.http.routers.speedtest.tls: "true"
       traefik.http.routers.speedtest.tls.certresolver: "cloudflare"
-      traefik.http.routers.speedtest.entrypoints: "https"
       traefik.http.routers.speedtest.rule: "Host(`speedtest.home.${BASE_DOMAIN}`)"
       traefik.http.services.speedtest.loadbalancer.server.port: "8080"
     networks:
@@ -182,7 +179,6 @@ services:
       traefik.http.routers.mealie.rule: "Host(`mealie.home.${BASE_DOMAIN}`)"
       traefik.http.routers.mealie.tls: "true"
       traefik.http.routers.mealie.tls.certresolver: "cloudflare"
-      traefik.http.routers.mealie.entrypoints: "https"
       traefik.http.services.mealie.loadbalancer.server.port: "9000"
     networks:
       proxy:
@@ -219,7 +215,6 @@ services:
       traefik.http.routers.qbittorrent.rule: 'Host(`qbittorrent.home.${BASE_DOMAIN}`)'
       traefik.http.routers.qbittorrent.tls: "true"
       traefik.http.routers.qbittorrent.tls.certresolver: "cloudflare"
-      traefik.http.routers.qbittorrent.entrypoints: "https"
       traefik.http.services.qbittorrent.loadbalancer.server.port: '8383'
 
   filebrowser:
@@ -245,7 +240,6 @@ services:
       traefik.http.services.filebrowser.loadbalancer.server.port: '80'
       traefik.http.routers.filebrowser.tls: "true"
       traefik.http.routers.filebrowser.tls.certresolver: "cloudflare"
-      traefik.http.routers.filebrowser.entrypoints: "https"
 
   jellyfin:
     image: "ghcr.io/linuxserver/jellyfin:10.11.3"
@@ -278,7 +272,6 @@ services:
       traefik.http.services.jellyfin.loadbalancer.server.scheme: "http"
       traefik.http.routers.jellyfin.tls: "true"
       traefik.http.routers.jellyfin.tls.certresolver: "cloudflare"
-      traefik.http.routers.jellyfin.entrypoints: "https"
 
   watchtower:
     image: "beatkind/watchtower:2.3.2"
@@ -333,7 +326,6 @@ services:
       traefik.http.services.gatus.loadbalancer.server.port: "8080"
       traefik.http.routers.gatus.tls: "true"
       traefik.http.routers.gatus.tls.certresolver: "cloudflare"
-      traefik.http.routers.gatus.entrypoints: "https"
 
   grafana:
     image: "grafana/grafana:12.2"
@@ -362,7 +354,6 @@ services:
       traefik.http.services.grafana.loadbalancer.server.port: "3000"
       traefik.http.routers.grafana.tls: "true"
       traefik.http.routers.grafana.tls.certresolver: "cloudflare"
-      traefik.http.routers.grafana.entrypoints: "https"
 
   prometheus:
     image: "prom/prometheus:v3.7.3"
@@ -447,7 +438,6 @@ services:
       traefik.http.services.backrest.loadbalancer.server.port: "9898"
       traefik.http.routers.backrest.tls: "true"
       traefik.http.routers.backrest.tls.certresolver: "cloudflare"
-      traefik.http.routers.backrest.entrypoints: "https"
 
   excalidraw:
     image: 'excalidraw/excalidraw:latest'
@@ -461,7 +451,6 @@ services:
       traefik.http.services.excalidraw.loadbalancer.server.port: "80"
       traefik.http.routers.excalidraw.tls: "true"
       traefik.http.routers.excalidraw.tls.certresolver: "cloudflare"
-      traefik.http.routers.excalidraw.entrypoints: "https"
 
   pinchflat:
     image: ghcr.io/kieraneglin/pinchflat:v2025.6.6
@@ -482,7 +471,6 @@ services:
       traefik.http.services.pinchflat.loadbalancer.server.port: "8945"
       traefik.http.routers.pinchflat.tls: "true"
       traefik.http.routers.pinchflat.tls.certresolver: "cloudflare"
-      traefik.http.routers.pinchflat.entrypoints: "https"
 
   apprise:
     image: "caronc/apprise:1.2"
@@ -504,7 +492,6 @@ services:
       traefik.http.services.apprise.loadbalancer.server.port: "8000"
       traefik.http.routers.apprise.tls: "true"
       traefik.http.routers.apprise.tls.certresolver: "cloudflare"
-      traefik.http.routers.apprise.entrypoints: "https"
 
   audiobookshelf:
     image: ghcr.io/advplyr/audiobookshelf:2.30.0
@@ -523,7 +510,6 @@ services:
       traefik.http.services.audiobookshelf.loadbalancer.server.port: "80"
       traefik.http.routers.audiobookshelf.tls: "true"
       traefik.http.routers.audiobookshelf.tls.certresolver: "cloudflare"
-      traefik.http.routers.audiobookshelf.entrypoints: "https"
 
 networks:
   proxy:

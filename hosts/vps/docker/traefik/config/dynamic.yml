@@ -59,8 +59,6 @@ http:
         htransformation:
           Rules:
             - Header: "Host"
-              # Value: '^grafana-home\.{{ env "BASE_DOMAIN" | replace "." "\\." }}$'
-              # ValueReplace: 'grafana.home.{{ env "BASE_DOMAIN" }}'
               Value:  '^(.+)-home\.{{ env "BASE_DOMAIN" | replace "." "\\." }}$'
               ValueReplace: '$1.home.{{ env "BASE_DOMAIN" }}'
               Type: 'RewriteValueRule'
@@ -77,6 +75,7 @@ http:
         - "immich-host-rewrite@file"
       rule: 'Host(`immich.{{ env "BASE_DOMAIN" }}`)'
       service: home
+      entrypoints: https
       tls:
         certResolver: cloudflare
     qbittorrent-home:
@@ -84,11 +83,13 @@ http:
         - "qbittorrent-host-rewrite@file"
       service: home
       rule: 'Host(`qbittorrent.{{ env "BASE_DOMAIN" }}`)'
+      entrypoints: https
       tls:
         certResolver: cloudflare
     jellyfin-home:
       service: home
       rule: 'Host(`jellyfin.{{ env "BASE_DOMAIN" }}`)'
+      entrypoints: https
       tls:
         certResolver: cloudflare
     excalidraw:
@@ -96,6 +97,7 @@ http:
         - "excalidraw-host-rewrite@file"
       service: home
       rule: 'Host(`excalidraw.{{ env "BASE_DOMAIN" }}`)'
+      entrypoints: https
       tls:
         certResolver: cloudflare
     audiobookshelf:
@@ -103,6 +105,7 @@ http:
         - "audiobookshelf-host-rewrite@file"
       service: home
       rule: 'Host(`audiobookshelf.{{ env "BASE_DOMAIN" }}`)'
+      entrypoints: https
       tls:
         certResolver: cloudflare
     homeServices:

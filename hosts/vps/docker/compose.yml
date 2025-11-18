@@ -117,6 +117,12 @@ services:
       - --log.level=INFO
       - --log.filePath=/logs/traefik.log
       - --accesslog.filePath=/logs/access.log
+      - --accesslog.format=json
+      - --accesslog.fields.defaultmode=keep
+      - --accesslog.fields.names.ClientUsername=drop
+      - --accesslog.fields.headers.defaultmode=keep
+      - --accesslog.fields.headers.names.User-Agent=redact
+      - --accesslog.fields.headers.names.Authorization=drop
       - --metrics.addInternals=true
       - --metrics.prometheus.addEntryPointsLabels=true
       - --metrics.prometheus.addRoutersLabels=true

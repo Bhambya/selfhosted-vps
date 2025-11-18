@@ -91,13 +91,6 @@ http:
       rule: 'Host(`jellyfin.{{ env "BASE_DOMAIN" }}`)'
       tls:
         certResolver: cloudflare
-    fb-home:
-      middlewares:
-        - "filebrowser-host-rewrite@file"
-      service: home
-      rule: 'Host(`fb-home.{{ env "BASE_DOMAIN" }}`)'
-      tls:
-        certResolver: cloudflare
     excalidraw:
       middlewares:
         - "excalidraw-host-rewrite@file"

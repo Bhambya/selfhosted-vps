@@ -128,6 +128,18 @@ endpoints:
         description: "VPS: healthcheck failed"
         send-on-resolved: true
 
+  - name: "Home server reachability"
+    url: "icmp://home-server-containers"
+    interval: 60s
+    conditions:
+      - "[CONNECTED] == true"
+    alerts:
+      - type: telegram
+        description: "VPS: healthcheck failed"
+        send-on-resolved: true
+      - type: custom
+        send-on-resolved: true
+
   - name: "Home reverse-proxy reachability"
     url: "https://home-server-containers/"
     client:
@@ -140,8 +152,6 @@ endpoints:
     alerts:
       - type: telegram
         description: "VPS: healthcheck failed"
-        send-on-resolved: true
-      - type: custom
         send-on-resolved: true
 
   - name: whatsapp
@@ -160,7 +170,7 @@ endpoints:
       timeout: "20s"
     alerts:
       - type: telegram
-        failure-threshold: 1
+        failure-threshold: 2
         success-threshold: 1
         description: "VPS: healthcheck failed"
         send-on-resolved: true

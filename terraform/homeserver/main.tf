@@ -170,6 +170,7 @@ module "containers" {
     "ssh",
     "http",
     "https",
-    "51820/udp"
+    "51820/udp",
+    "from 172.16.0.0/12" # allow from the docker subnet
   ]
 }

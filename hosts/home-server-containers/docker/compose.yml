@@ -426,7 +426,7 @@ services:
       - ${IMMICH_UPLOAD_PATH}/library:/immich/library:ro
       - ${IMMICH_UPLOAD_PATH}/profile:/immich/profile:ro
       # credentials
-      - ./restic-immich-backup-key.json:/creds/restic-immich-backup-key.json:ro
+      - /var/lib/docker-data/backrest/restic-immich-backup-key.json:/creds/restic-immich-backup-key.json:ro
     environment:
       TZ: ${TIME_ZONE}
       BACKREST_DATA: /data

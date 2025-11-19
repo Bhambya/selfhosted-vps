@@ -1,196 +1,280 @@
-# homelab
+# Homelab IaC
 
-My setup for self-hosting a bunch of services on a VPS with a public IP. The VPS also acts as the window to my home server with a dynamic IP. 
+[![CD](https://github.com/Bhambya/homelab/actions/workflows/CD.yml/badge.svg)](https://github.com/Bhambya/homelab/actions/workflows/CD.yml)
+[![Weekly host maintenance](https://github.com/Bhambya/homelab/actions/workflows/weekly_maintenance.yml/badge.svg)](https://github.com/Bhambya/homelab/actions/workflows/weekly_maintenance.yml)
 
-All of the services run in docker containers. Some host config is required which is described below.
+## Overview
 
-![Alt text](diagram.webp?raw=true "Diagram")
+This repository contains the IaC ([Infrastructure as Code](https://en.wikipedia.org/wiki/Infrastructure_as_code)) configuration for my homelab. The setup securely connects a public VPS with my private home server network.
+
+All services are containerized or run in a separate VM.
+
+Security is a top priority. Only the SSH and HTTP[s] ports are exposed. All HTTP[s] traefik goes through the reverse proxy [Traefik](https://github.com/traefik/traefik). [Authelia](https://www.authelia.com/) authenticates and authorizes all requests. [CrowdSec](https://www.crowdsec.net/) bans bad actors automatically by parsing various logs. WireGuard VPN connects all the hosts in my homelab securely.
+
+- **Infrastructure as Code**: Everything is defined in OpenTofu/Terraform for reproducibility
+- **Automated Deployment**: GitHub Actions + Ansible playbooks are used for continuous deployment.
+- **Comprehensive Monitoring**: I deploy Prometheus, Grafana, and Gatus for full observability
+
+### Architecture
+
+The setup uses a **public VPS as an internet gateway** that securely tunnels traffic to **my home server services** which is behind a CGNAT. This approach provides:
+
+- **Availability**: Critical services on the VPN keep functioning if my home has a power/network outage.
+- **Privacy & security**: My home network remains completely isolated from the internet. Single point of entry allows effective intrusion detection.
+
+![High level architecture](docs/diagram.webp?raw=true "High level architecture")
 
 ## Services
 
-Some services are hosted directly on VPS and others are hosted on the home server.
+The homelab runs various services distributed across VPS and the home server.
 
-### Hosted directly on VPS
+### Common services
 
-- [Traefik](https://traefik.io/traefik) - The reverse proxy.
-- [Authelia](https://www.authelia.com/) - Almost all services use Authelia for authentication. Some services have their own auth. Check `docker/authelia/configuration.yml` for the config for each service.
-- [Crowdsec](https://www.crowdsec.net/) - Blocks malicious IPs.
-- [Wireguard](https://www.wireguard.com/) - Used to tunnel traffic to the home server.
-- [IT-tools](https://github.com/CorentinTh/it-tools) - Collection of handy online tools for developers, with great UX. 
-- [Watchtower](https://github.com/containrrr/watchtower) - Notifies when docker image updates are available
-- [Stirling-pdf](https://github.com/Stirling-Tools/Stirling-PDF) - Allows you to perform various operations on PDF files 
-- [Prometheus](https://github.com/prometheus/prometheus) - Server for storing and querying telemetry
-- [Node exporter](https://github.com/prometheus/node_exporter) - Exports the VPS's metrics to prometheus
-- [Grafana](https://github.com/grafana/grafana) - Dashboarding and monitoring
-- [Vaultwarden](https://github.com/dani-garcia/vaultwarden) - Password manager
-- [Backrest](https://github.com/garethgeorge/backrest/) - Awesome Web-UI for backup management built on top of [restic](https://restic.net/).
-- [Apprise](https://github.com/caronc/apprise) - Configurable web service for sending notifications.
-- [Paperless-ngx](https://docs.paperless-ngx.com/) - Document management. A BIG upgrade over storing them in Google drive.
-- [Gatus](https://github.com/TwiN/gatus) - Simple webapp monitoring. I find it better than uptime-kuma because I can store the config in code.
-- [Linkwarden](https://github.com/linkwarden/linkwarden) - Bookmarking tool
-- [Readeck](https://readeck.org/en/) - One more bookmarking tool
-- [Filebrowser](https://github.com/gtsteffaniak/filebrowser) - Web based file explorer for uploading/downloading files to/from VPS quickly.
+These services run on both VPS and home server with specific configurations for each environment:
 
-## Installation
+- [Traefik](https://traefik.io/traefik) - Reverse proxy for routing traffic and SSL termination
+- [Filebrowser](https://github.com/gtsteffaniak/filebrowser) - Web-based file explorer for managing files
+- [Backrest](https://github.com/garethgeorge/backrest/) - Web-UI for backup management built on top of [restic](https://restic.net/)
+- [Apprise](https://github.com/caronc/apprise) - Push notification service for alerts and monitoring
 
-1. Start with Ubuntu LTS
-1. [Enable Unattended Upgrades](https://help.ubuntu.com/community/AutomaticSecurityUpdates)
-1. Clone this repo
-1. Sign into any private docker registries
-1. Install [Docker](https://docs.docker.com/engine/install/)
+### Monitoring services
+
+Observability and monitoring stack deployed across both environments:
+
+- [Prometheus](https://github.com/prometheus/prometheus) - Time-series database for metrics collection
+- [Node exporter](https://github.com/prometheus/node_exporter) - Exports system metrics from both VPS and home server
+- [Grafana](https://github.com/grafana/grafana) - Dashboarding and visualization for metrics and logs
+- [Gatus](https://github.com/TwiN/gatus) - Service health monitoring and status page generation
+- [cAdvisor](https://github.com/google/cadvisor) - Container resource usage monitoring *(home server only)*
+
+### Services hosted directly on the VPS
+
+Some services which don't require too much disk space or resources are hosted directly on the VPS:
+
+- [Authelia](https://www.authelia.com/) - Authentication and authorization provider with OIDC support
+- [Crowdsec](https://www.crowdsec.net/) - Collaborative security engine for blocking malicious IPs
+- [Wireguard](https://www.wireguard.com/) - VPN server for secure tunneling to home server
+- [IT-tools](https://github.com/CorentinTh/it-tools) - Collection of handy online tools for developers
+- [Stirling-pdf](https://github.com/Stirling-Tools/Stirling-PDF) - PDF manipulation and processing tools
+- [Vaultwarden](https://github.com/dani-garcia/vaultwarden) - Self-hosted Bitwarden-compatible password manager
+- [Paperless-ngx](https://docs.paperless-ngx.com/) - Document management system with OCR capabilities
+- [Linkwarden](https://github.com/linkwarden/linkwarden) - Bookmark and link management tool
+- [Readeck](https://readeck.org/en/) - Read-later and article management service
+- [Github Release Monitor](https://github.com/iamspido/github-release-monitor) - Monitors GitHub releases for software updates
+
+### Services hosted on the home server
+
+Services hosted on the home server behind the VPN:
+
+- [Immich](https://immich.app/) - High-performance photo and video management with AI features
+- [Jellyfin](https://jellyfin.org/) - Media server for streaming movies, TV shows, and family videos
+- [Audiobookshelf](https://www.audiobookshelf.org/) - Audiobook and podcast server with progress tracking
+- [Mealie](https://mealie.io/) - Recipe management and meal planning application
+- [qBittorrent](https://www.qbittorrent.org/) - BitTorrent client with web interface
+- [Pinchflat](https://github.com/kieraneglin/pinchflat) - YouTube channel archiver using yt-dlp
+- [Speedtest](https://github.com/librespeed/speedtest-rust) - Self-hosted internet speed testing
+- [Excalidraw](https://excalidraw.com/) - Collaborative whiteboard for creating hand-drawn diagrams
+
+
+## VPN Architecture
+
+[Wireguard](https://www.wireguard.com/) is the secret sauce that allows the outside world to connect to my home server which is behind a CGNAT. It works through a process called [NAT hole punching](https://en.wikipedia.org/wiki/Hole_punching_\(networking\)).
+
+This homelab uses a dual-VPN setup to securely connect the public VPS to the home server network behind a dynamic IP.
+
+![VPN](docs/vpn.svg?raw=true "VPN")
+
+### Network Structure
+
+```
+Internet → VPS (Gateway) → WireGuard Tunnel → Home Router VM → Home Services
+```
+
+### VPN Networks
+
+#### 1. Gateway-to-Home VPN
+- **Purpose**: Connects the public VPS (gateway) to the home server router VM
+- **Network**: `10.13.13.0/24`
+- **Gateway (VPS)**: `10.13.13.1/32`
+- **Home Router**: `10.13.14.1/32` (as peer)
+
+#### 2. Internal Home VPN mesh
+- **Purpose**: Connects all home server VMs through in mesh
+- **Network**: `10.13.14.0/24`
+- **Home Router**: `10.13.14.2/32` (on wg1 interface)
+- **Connected VMs**:
+  - `home-server-wireguard-router`: VM which connects with the VPS
+  - `home-server-adguard`: DNS server
+  - `home-server-containers`: Docker services host
+  - `home-server-tailscale`: Allows me to get into my home network remotely as a fallback in case I mess up the wireguard config or lose the gateway.
+
+### Components
+
+#### Gateway (VPS)
+- **Role**: Internet-facing entry point and reverse proxy
+- **WireGuard Config**: 
+  - Interface: `wg0`
+  - Address: `10.13.13.1/32`
+  - Peer: Home router at `10.13.14.1`
+
+#### Home Server WireGuard Router
+- **Role**: VPN gateway and traffic router for home network
+- **Dual Interface Setup**:
+  - **wg0**: Connects to Gateway VPS (`10.13.14.1/32`)
+  - **wg1**: Serves internal home VMs (`10.13.14.2/32`)
+- **Traffic Forwarding**: Routes traffic between VPN networks and home LAN
+- **iptables Rules**: 
+  - Allows gateway access to home VMs
+  - Prevents home VMs from initiating connections to gateway
+
+### Traffic Flow
+
+1. **Inbound (Internet → Home Services)**:
+   ```
+   Internet → Gateway VPS → wg0 tunnel → Home Router → wg1 → Home VM → Docker Service
+   ```
+
+2. **Management Access**:
+   ```
+   Admin → Gateway VPS → wg0 → Home Router → wg1 → Home VMs (via SSH jump host)
+   ```
+
+3. **Service Access**:
+   - Public services are exposed through Traefik on the Gateway VPS
+   - Home services are tunneled through the VPN and proxied by Gateway Traefik
+   - Internal home services use local Traefik instance
+
+### Security Features
+
+- **Network Isolation**: Home network is completely isolated from internet
+- **Jump Host**: Gateway VPS serves as SSH jump host for home server management
+- **Stateful Filtering**: iptables rules prevent unauthorized access patterns
+- **Dynamic IP Support**: Home server can have dynamic IP; only VPS needs static IP
+
+## Infrastructure as Code
+
+The entire homelab infrastructure is defined and managed using OpenTofu/Terraform, enabling reproducible infrastructure deployments across Oracle Cloud Infrastructure (OCI) and Proxmox.
+
+### VPS Infrastructure (Oracle Cloud - OCI)
+
+The public VPS infrastructure leverages Oracle's **Always Free Tier** ARM-based compute instances:
+
+#### VPS Infrastructure Table
+
+| Instance | Provider | Type | CPU | RAM | Storage | Cost | Purpose |
+|----------|----------|------|-----|-----|---------|------|---------|
+| **Gateway VPS** | Oracle Cloud (OCI) | VM.Standard.A1.Flex (ARM64) | 4 OCPUs | 24GB | 150GB | **Free** | Primary internet gateway |
+| **Little Gateway** | Oracle Cloud (OCI) | VM.Standard.E2.1.Micro (AMD64) | 1 OCPU | 1 GB | 50GB | **Free** | Backup/experimentation |
+
+### Home Server Infrastructure (Proxmox)
+
+The home server runs multiple VMs on Proxmox hypervisor, all defined through Terraform:
+
+#### VM Specifications Table
+
+| VM Name | CPU Cores | RAM | Disk | IP Address | Purpose | Key Features |
+|---------|-----------|-----|------|------------|---------|--------------|
+| **AdGuard Home** | 2 | 512MB | 4GB | 192.168.1.107/24 | DNS server & ad blocking | Auto-configured DNS rules for homelab domains |
+| **WireGuard Router** | 2 | 512MB | 4GB | 192.168.1.104/24 | VPN gateway to OCI VPS | Dual-interface setup (wg0↔VPS, wg1↔internal VMs) |
+| **Docker Services** | 4 | 20GB | 100GB | 192.168.1.103/24 | Docker Compose host | NFS mounts: Jellyfin, Movies, TV, Audiobooks, eBooks, Videos, Immich |
+| **Tailscale Exit node** | 2 | 512MB | 4GB | 192.168.1.105/24 | Backup VPN & exit node | Fallback remote connectivity to my home network |
+
+### Infrastructure Features
+
+#### Network Configuration
+- **Home Network**: `192.168.1.0/24` with static IP assignments
+- **VPN Networks**: `10.13.13.0/24` (gateway-to-home) and `10.13.14.0/24` (internal mesh)
+- **DNS Resolution**: AdGuard configured with homelab service records
+- **Firewall Rules**: UFW rules automatically configured per service requirements
+
+### Terraform Structure
+
+```
+terraform/
+├── vps/                   # Oracle Cloud Infrastructure
+│   ├── main.tf            # OCI networking and module orchestration
+│   ├── gateway/           # Main gateway VPS module
+│   └── little-gateway/    # Secondary/backup gateway module
+└── homeserver/            # Proxmox home infrastructure  
+    ├── main.tf            # VM definitions and cloud-init config
+    └── ubuntu_vm/         # Reusable VM module for Proxmox
+```
+
+### Deployment Commands
+
+**Deploy OCI VPS Infrastructure**:
+```bash
+cd terraform/vps
+tofu init
+tofu plan
+tofu apply
+```
+
+**Deploy Home Server VMs**:
+```bash
+cd terraform/homeserver  
+tofu init
+tofu plan
+tofu apply
+```
+## Automated Deployment
+
+The homelab infrastructure is automatically deployed using GitHub Actions and Ansible, with secrets securely managed through Bitwarden Secrets Manager.
+
+### Deployment Process
+
+1. **Trigger**: Deployments run automatically on every push to the `main` branch or can be manually triggered
+2. **GitHub Actions Workflow**: The `CD.yml` workflow orchestrates the entire deployment process
+3. **Ansible Playbooks**: Two main playbooks handle deployments:
+   - `deploy_vps.yml`: Deploys services to the public VPS
+   - `deploy-home-server-docker.yml`: Deploys services to the home server using the VPS as the jump host.
+
+### Deployment Steps
+
+Each deployment follows this sequence:
+
+1. **Environment Setup**:
+   - Install Ansible and Bitwarden SDK on the GitHub Actions runner
+   - Retrieve SSH keys and host information from Bitwarden Secrets Manager
+   - Configure SSH agent for secure host access
+
+2. **Configuration Management**:
+   - Clone the latest repository code to target hosts
+   - Process `secret-mappings.yml` files to identify required secrets
+   - Fetch secrets from Bitwarden using the `bws` CLI tool
+   - Generate `.env` files and configuration files with interpolated secrets
+
+3. **Service Deployment**:
+   - Deploy Docker Compose services with `docker compose up`
+   - Configure system services (logrotate, cron jobs, etc.)
+   - Verify service health and display deployment status
+
+### Secrets Management
+
+All secrets are managed through **Bitwarden Secrets Manager**:
+
+### Manual Deployment
+
+For manual deployments or troubleshooting:
 
 ```bash
-cd homelab
+# Install dependencies
+pip install ansible bitwarden-sdk
+ansible-galaxy collection install bitwarden.secrets
 
-# install logrotate
-sudo apt update
-sudo apt install logrotate
+# Set Bitwarden access token
+export BWS_ACCESS_TOKEN="bitwarden-access-token"
 
-# install sqlite3
-sudo apt install sqlite3
+# Deploy to VPS
+ansible-playbook -i ansible/inventory.yml ansible/playbooks/deploy_vps.yml
 
-# enable logrotate
-sudo cp etc/traefik-logrotate.conf /etc/logrotate.d/
-sudo cp etc/authelia-logrotate.conf /etc/logrotate.d/
-sudo cp etc/vaultwarden-logrotate.conf /etc/logrotate.d/
-sudo systemctl restart logrotate
+# Deploy to home server
+ansible-playbook -i ansible/inventory.yml ansible/playbooks/deploy-home-server-docker.yml
 ```
-
-## Updating VPS IP in the Cloudflare DNS if it's not static
-
-- Clone the github repo `https://github.com/K0p1-Git/cloudflare-ddns-updater`.
-- Update the variables in the script.
-- Add the script to crontab to run every hour.
-
-## Docker
-
-[Set up docker daemon.json](https://www.reddit.com/r/selfhosted/comments/1az6mqa/psa_adjust_your_docker_defaultaddresspool_size/). Otherwise, you may end up with subnet ranges inside your containers that overlap with the real LAN and make hosts unreachable.
-Edit the `/etc/docker/daemon.json` file:
-
-```json
-{
-  "log-driver": "json-file",
-  "log-opts": {
-    "max-size": "10m",
-    "max-file": "3"
-  },
-  "default-address-pools": [
-    {
-      "base": "172.16.0.0/12",
-      "size": 24
-    }
-  ],
-  "metrics-addr": "0.0.0.0:9323"
-}
-```
-
-```
-cd docker
-cp .env.example .env # edit this
-docker compose up -d
-```
-
-### Install crons
-
-The scripts in the `crons` directory should be installed. The Github workflow `CD.yml` already does this.
-
-### Wireguard setup
-
-Install wireguard on the VPS using `sudo apt install wireguard`
-
-#### Traffic forwarding
-Allow IPv4 forwarding so the VM
-
-```
-sudo vi /etc/sysctl.conf
-```
-If you are using IPv4 with WireGuard, add the following line at the bottom of the file:
-/etc/sysctl.conf
-
-```
-net.ipv4.ip_forward=1
-```
-
-If you are using IPv6 with WireGuard, add this line at the bottom of the file:
-/etc/sysctl.conf
-```
-net.ipv6.conf.all.forwarding=1
-```
-If you are using both IPv4 and IPv6, ensure that you include both lines. Save and close the file when you are finished.
-
-To read the file and load the new values for your current terminal session, run:
-```
-sudo sysctl -p
-```
-Output
-```
-net.ipv6.conf.all.forwarding = 1
-net.ipv4.ip_forward = 1
-```
-
-#### Wireguard config
-
-Look up the default network interface using
-
-```
-ip route list default
-```
-
-After the `wireguard` docker container is created, add the following lines to the `/etc/wireguard/wg0.conf`:
-
-
-```
-[Interface]
-Address = 10.13.13.1
-ListenPort = 51820
-PrivateKey = <generated-private-key>
-PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o <default-network-interface> -j MASQUERADE
-PreDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o <default-network-interface> -j MASQUERADE
-
-[Peer]
-PublicKey = <generated-public-key>
-PresharedKey = <generated-preshared-key>
-AllowedIPs = 10.13.13.2/32
-PersistentKeepalive = 25
-```
-
-Also set up wireguard peer in the home server.
-
-Start wireguard
-
-```
-sudo systemctl enable wg-quick@wg0.service
-sudo systemctl start wg-quick@wg0.service
-```
-
-See also: https://www.digitalocean.com/community/tutorials/how-to-set-up-wireguard-on-ubuntu-20-04
 
 ### Crowdsec setup
 
 - Login to the [Crowdsec console](https://app.crowdsec.net) and enroll the node by following the instructions.
-
-#### Install crowdsec-firewall-bouncer
-
-This is used to modify iptables rules to block SSH logins, for example.
-
-This is taken from [Firewall | Crowdsec](https://docs.crowdsec.net/u/bouncers/firewall/):
-
-```
-# install the repositories
-curl -s https://install.crowdsec.net | sudo sh
-
-sudo apt install crowdsec-firewall-bouncer-iptables
-```
-
-Get the API key for the bouncer by running
-
-```
-docker exec crowdsec cscli bouncers add bouncer-firewall
-```
-
-Copy the file `./etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml` to `/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml`
-
-Edit the file `/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml` and edit the `api_key` field.
 
 ### Backups
 
@@ -205,11 +289,6 @@ Unfortunately, the backrest config cannot be checked-in because it doesn't suppo
 Hence, when setting up for the first time, the repository and backup schedule needs to be configured through the backrest web UI.
 
 In case of data loss, restore the latest snapshot using [restic](https://github.com/restic/restic).
-
-### Grafana setup
-
-- Generate a random password with more than 60 characters. Set it in the `.env` file in the variable `GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET`.
-- Generate argon2 hash using Authelia docker image `docker run --rm -it authelia/authelia:latest authelia crypto hash generate argon2`. Put the hash in the file `/var/lib/docker-data/authelia/secrets/oidc/grafana_client_secret.txt`
 
 ### Paperless-ngx setup
 

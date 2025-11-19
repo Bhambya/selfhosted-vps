@@ -153,6 +153,9 @@ module "containers" {
     "apt-get update",
     "apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin",
     "mkdir -p /etc/docker/",
+    # https://www.reddit.com/r/selfhosted/comments/1az6mqa/psa_adjust_your_docker_defaultaddresspool_size/
+    # Otherwise, you may end up with subnet ranges inside your containers that overlap with the real LAN 
+    # and make hosts unreachable.
     indent(4, "|\ncat > /etc/docker/daemon.json <<'EODC'\n${file("${path.module}/docker-config.json")}\nEODC"),
     "systemctl restart docker",
     "mount -a"

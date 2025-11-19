@@ -23,6 +23,9 @@ write_files:
       PasswordAuthentication no
     path: /etc/ssh/sshd_config.d/60-disable-root-login.conf
     permissions: '0644'
+  # https://www.reddit.com/r/selfhosted/comments/1az6mqa/psa_adjust_your_docker_defaultaddresspool_size/
+  # Otherwise, you may end up with subnet ranges inside your containers that overlap with the real LAN 
+  # and make hosts unreachable.
   - content: |
       {
         "log-driver": "json-file",

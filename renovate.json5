@@ -112,21 +112,6 @@
       "versioning": "regex:^(?<major>\\d+)(\\.(?<minor>\\d+))?(\\.(?<patch>\\d+))?(\\.(?<build>\\d+))?(-[[:alnum:]]+)?$"
     },
     {
-      "description": "Pin specific images that should be updated carefully",
-      "matchPackageNames": [
-        "postgres",
-        "redis",
-        "traefik",
-        "ghcr.io/authelia/authelia"
-      ],
-      "labels": [
-        "critical-service"
-      ],
-      "groupName": "Critical service updates",
-      "extends": ["schedule:weekends"],
-      "prPriority": 10
-    },
-    {
       "description": "Auto-update monitoring and utility tools",
       "matchPackageNames": [
         "prom/prometheus",

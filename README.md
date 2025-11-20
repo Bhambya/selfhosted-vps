@@ -84,49 +84,6 @@ This homelab uses a dual-VPN setup to securely connect the public VPS to the hom
 
 ![VPN](docs/vpn.svg?raw=true "VPN")
 
-### Network Structure
-
-```
-Internet → VPS (Gateway) → WireGuard Tunnel → Home Router VM → Home Services
-```
-
-### VPN Networks
-
-#### 1. Gateway-to-Home VPN
-- **Purpose**: Connects the public VPS (gateway) to the home server router VM
-- **Network**: `10.13.13.0/24`
-- **Gateway (VPS)**: `10.13.13.1/32`
-- **Home Router**: `10.13.14.1/32` (as peer)
-
-#### 2. Internal Home VPN mesh
-- **Purpose**: Connects all home server VMs through in mesh
-- **Network**: `10.13.14.0/24`
-- **Home Router**: `10.13.14.2/32` (on wg1 interface)
-- **Connected VMs**:
-  - `home-server-wireguard-router`: VM which connects with the VPS
-  - `home-server-adguard`: DNS server
-  - `home-server-containers`: Docker services host
-  - `home-server-tailscale`: Allows me to get into my home network remotely as a fallback in case I mess up the wireguard config or lose the gateway.
-
-### Components
-
-#### Gateway (VPS)
-- **Role**: Internet-facing entry point and reverse proxy
-- **WireGuard Config**: 
-  - Interface: `wg0`
-  - Address: `10.13.13.1/32`
-  - Peer: Home router at `10.13.14.1`
-
-#### Home Server WireGuard Router
-- **Role**: VPN gateway and traffic router for home network
-- **Dual Interface Setup**:
-  - **wg0**: Connects to Gateway VPS (`10.13.14.1/32`)
-  - **wg1**: Serves internal home VMs (`10.13.14.2/32`)
-- **Traffic Forwarding**: Routes traffic between VPN networks and home LAN
-- **iptables Rules**: 
-  - Allows gateway access to home VMs
-  - Prevents home VMs from initiating connections to gateway
-
 ### Traffic Flow
 
 1. **Inbound (Internet → Home Services)**:
@@ -187,36 +144,6 @@ The home server runs multiple VMs on Proxmox hypervisor, all defined through Ter
 - **DNS Resolution**: AdGuard configured with homelab service records
 - **Firewall Rules**: UFW rules automatically configured per service requirements
 
-### Terraform Structure
-
-```
-terraform/
-├── vps/                   # Oracle Cloud Infrastructure
-│   ├── main.tf            # OCI networking and module orchestration
-│   ├── gateway/           # Main gateway VPS module
-│   └── little-gateway/    # Secondary/backup gateway module
-└── homeserver/            # Proxmox home infrastructure  
-    ├── main.tf            # VM definitions and cloud-init config
-    └── ubuntu_vm/         # Reusable VM module for Proxmox
-```
-
-### Deployment Commands
-
-**Deploy OCI VPS Infrastructure**:
-```bash
-cd terraform/vps
-tofu init
-tofu plan
-tofu apply
-```
-
-**Deploy Home Server VMs**:
-```bash
-cd terraform/homeserver  
-tofu init
-tofu plan
-tofu apply
-```
 ## Automated Deployment
 
 The homelab infrastructure is automatically deployed using GitHub Actions and Ansible, with secrets securely managed through Bitwarden Secrets Manager.

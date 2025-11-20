@@ -320,6 +320,36 @@ services:
       - ./prometheus:/etc/prometheus
       - prom_data:/prometheus
 
+  loki:
+    image: "grafana/loki:3.5.8"
+    container_name: loki
+    restart: unless-stopped
+    networks:
+      - prometheus
+    command: -config.file=/etc/loki/config.yaml
+    volumes:
+      - ./loki:/etc/loki
+      - loki_data:/tmp/loki
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  alloy:
+    image: "grafana/alloy:v1.11.3"
+    container_name: alloy
+    restart: unless-stopped
+    networks:
+      - prometheus
+    volumes:
+      - ./alloy:/etc/alloy
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/tmp/alloy /etc/alloy/config.alloy
+    depends_on:
+      - loki
+
   node_exporter:
     image: "quay.io/prometheus/node-exporter:v1.10.2"
     container_name: node_exporter
@@ -738,6 +768,7 @@ volumes:
   redis-authelia-cache:
   redis-paperless-cache:
   prom_data:
+  loki_data:
   whatsapp_volume:
     name: "whatsapp_volume"
   gradle_cache:

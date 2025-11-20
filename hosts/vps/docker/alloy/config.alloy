@@ -1,0 +1,225 @@
+// Grafana Alloy configuration for log collection
+
+// Loki endpoint configuration
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+// System logs discovery
+local.file_match "system_logs" {
+  path_targets = [
+    {
+      __path__ = "/var/log/*.log",
+      job = "varlogs",
+    },
+    {
+      __path__ = "/var/log/syslog",
+      job = "syslog",
+    },
+    {
+      __path__ = "/var/log/kern.log",
+      job = "kernel",
+    },
+  ]
+}
+
+// Docker container logs discovery
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+// Traefik access logs discovery
+local.file_match "traefik_access_logs" {
+  path_targets = [
+    {
+      __path__ = "/var/log/traefik/access.log*",
+      job = "traefik_access_logs",
+    },
+  ]
+}
+
+// Authelia logs discovery
+local.file_match "authelia_logs" {
+  path_targets = [
+    {
+      __path__ = "/var/log/authelia/*.log",
+      job = "authelia",
+    },
+  ]
+}
+
+// Vaultwarden logs discovery
+local.file_match "vaultwarden_logs" {
+  path_targets = [
+    {
+      __path__ = "/var/log/vaultwarden/*.log",
+      job = "vaultwarden",
+    },
+  ]
+}
+
+// System logs processing
+loki.source.file "system_logs" {
+  targets    = local.file_match.system_logs.targets
+  forward_to = [loki.process.system_logs.receiver]
+}
+
+loki.process "system_logs" {
+  forward_to = [loki.write.default.receiver]
+
+  stage.static_labels {
+    values = {
+      source = "system",
+    }
+  }
+
+  stage.timestamp {
+    source = "timestamp"
+    format = "RFC3339"
+  }
+}
+
+// Docker container logs processing
+loki.source.docker "containers" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.containers.targets
+  forward_to = [loki.process.docker_logs.receiver]
+}
+
+loki.process "docker_logs" {
+  forward_to = [loki.write.default.receiver]
+
+  stage.static_labels {
+    values = {
+      job = "containerlogs",
+    }
+  }
+
+  stage.json {
+    expressions = {
+      output = "log",
+      stream = "stream",
+      time   = "time",
+    }
+  }
+
+  stage.timestamp {
+    source = "time"
+    format = "RFC3339Nano"
+  }
+
+  stage.output {
+    source = "output"
+  }
+}
+
+// Traefik access logs processing
+loki.source.file "traefik_access_logs" {
+  targets    = local.file_match.traefik_access_logs.targets
+  forward_to = [loki.process.traefik_access_logs.receiver]
+}
+
+loki.process "traefik_access_logs" {
+  forward_to = [loki.write.default.receiver]
+
+  stage.static_labels {
+    values = {
+      job = "traefik_access_logs",
+    }
+  }
+
+  stage.json {
+    drop_malformed = true
+    expressions = {
+      level = "level",
+      msg   = "msg",
+      time  = "time",
+    }
+  }
+
+  stage.labels {
+    values = {
+      level = "",
+    }
+  }
+
+  stage.timestamp {
+    source = "time"
+    format = "RFC3339"
+  }
+}
+
+// Authelia logs processing
+loki.source.file "authelia_logs" {
+  targets    = local.file_match.authelia_logs.targets
+  forward_to = [loki.process.authelia_logs.receiver]
+}
+
+loki.process "authelia_logs" {
+  forward_to = [loki.write.default.receiver]
+
+  stage.static_labels {
+    values = {
+      job = "authelia",
+    }
+  }
+
+  stage.json {
+    expressions = {
+      level = "level",
+      msg   = "msg",
+      time  = "time",
+    }
+  }
+
+  stage.labels {
+    values = {
+      level = "",
+    }
+  }
+
+  stage.timestamp {
+    source = "time"
+    format = "RFC3339"
+  }
+}
+
+// Vaultwarden logs processing
+loki.source.file "vaultwarden_logs" {
+  targets    = local.file_match.vaultwarden_logs.targets
+  forward_to = [loki.process.vaultwarden_logs.receiver]
+}
+
+loki.process "vaultwarden_logs" {
+  forward_to = [loki.write.default.receiver]
+
+  stage.static_labels {
+    values = {
+      job = "vaultwarden",
+    }
+  }
+
+  stage.regex {
+    expression = "^\\[(?P<timestamp>[^\\]]+)\\]\\[(?P<level>[^\\]]+)\\]\\[(?P<target>[^\\]]+)\\] (?P<message>.*)"
+  }
+
+  stage.labels {
+    values = {
+      level  = "",
+      target = "",
+    }
+  }
+
+  stage.timestamp {
+    source = "timestamp"
+    format = "2006-01-02 15:04:05.000 -07:00"
+  }
+}
+
+// Logging configuration
+logging {
+  level  = "info"
+  format = "logfmt"
+}

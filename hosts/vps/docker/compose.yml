@@ -1,6 +1,6 @@
 services:
   redis-authelia:
-    image: "redis:8.2.2"
+    image: "redis:8.4.0"
     container_name: "redis-authelia"
     restart: unless-stopped
     networks:
@@ -486,7 +486,7 @@ services:
     restart: unless-stopped
 
   redis-paperless:
-    image: "redis:8.2.2"
+    image: "redis:8.4.0"
     container_name: "redis-paperless"
     restart: unless-stopped
     networks:
@@ -606,7 +606,7 @@ services:
 
   postgres:
     container_name: postgres
-    image: postgres:18.0-alpine
+    image: postgres:18.1-alpine
     networks:
       - postgres
     environment:

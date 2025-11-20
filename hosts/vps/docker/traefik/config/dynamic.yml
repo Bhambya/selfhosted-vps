@@ -54,6 +54,15 @@ http:
       headers:
         customrequestheaders:
           Host: audiobookshelf.home.{{ env "BASE_DOMAIN" }}
+    # response rewrite
+    rewriteHomeResponseHeaders:
+      plugin:
+        rewriteHeaders:
+          rewrites:
+            - header: "Location"
+              regex: '^https://(.+)\.home\.{{ env "BASE_DOMAIN" | replace "." "\\." }}(.*)'
+              replacement: 'https://$1-home.{{ env "BASE_DOMAIN" }}$2'
+    # request rewrite
     rewriteHomeHostHeader:
       plugin:
         htransformation:
@@ -61,7 +70,7 @@ http:
             - Rule:
               Header: "Referer"
               Name: "Referer rewrite"
-              Value:  '^https://(.+)-home\.{{ env "BASE_DOMAIN" | replace "." "\\." }}(.*)'
+              Value: '^https://(.+)-home\.{{ env "BASE_DOMAIN" | replace "." "\\." }}(.*)'
               ValueReplace: 'https://$1.home.{{ env "BASE_DOMAIN" }}$2'
               Type: 'RewriteValueRule'
             - Rule:
@@ -120,6 +129,7 @@ http:
     homeServices:
       middlewares:
         - "rewriteHomeHostHeader"
+        - "rewriteHomeResponseHeaders"
       service: home
       rule: 'HostRegexp(`^[a-z]+-home\.{{ env "BASE_DOMAIN" | replace "." "\\." }}$`)'
       tls:

@@ -1,11 +1,6 @@
-- name: Lookup secrets on the control node in one go
+- name: Lookup secrets on the control node
   ansible.builtin.set_fact:
-    secrets: |
-      [
-      {% for secret_id in env_file['secrets'].values() %}
-         "{{ lookup('bitwarden.secrets.lookup', secret_id) }}",
-      {% endfor %}
-      ]
+    secrets: "{{ env_file['secrets'].values() | map('lookup', 'bitwarden.secrets.lookup') | list }}"
   changed_when: false
   delegate_to: localhost
 

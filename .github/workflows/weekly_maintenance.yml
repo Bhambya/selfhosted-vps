@@ -24,6 +24,12 @@ jobs:
           ansible-galaxy collection install -r ./ansible/requirements.yml
           ansible-galaxy role install -r ./ansible/requirements.yml
 
+      - name: Prepare control node
+        env:
+          ANSIBLE_CONFIG: ansible/ansible.cfg
+        run: |
+          ansible-playbook ansible/playbooks/prepare_control_node.yml
+
       - name: ⬇️ Get Secrets from Bitwarden
         uses: bitwarden/sm-action@v2
         with:

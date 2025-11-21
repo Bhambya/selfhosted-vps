@@ -1,7 +1,13 @@
 - name: Lookup secrets on the control node
-  ansible.builtin.set_fact:
-    secrets: "{{ query('bitwarden.secrets.lookup', *env_file['secrets'].values()) }}"
+  ansible.builtin.shell: "set -o pipefail && bws secret get {{ item }} | jq -r '.value'"
+  args:
+    executable: /bin/bash
+  register: write_env_file_bw_secret_output
+  loop: "{{ env_file['secrets'].values() }}"
+  loop_control:
+    break_when: write_env_file_bw_secret_output.rc != 0
   changed_when: false
+  failed_when: write_env_file_bw_secret_output.rc != 0
   delegate_to: localhost
 
 - name: Write .env file to target host
@@ -15,7 +21,7 @@
       {% for item in (env_file['vars'] | default({})) | dict2items %}
       {{ item.key }}='{{ lookup("vars", item.value) }}'
       {% endfor %}
-      {% for key, secret in env_file['secrets'].keys() | zip(secrets) %}
-      {{ key }}='{{ secret }}'
+      {% for key, secret in env_file['secrets'].keys() | zip(write_env_file_bw_secret_output.results) %}
+      {{ key }}='{{ secret.stdout }}'
       {% endfor %}
     mode: "{{ env_file['mode'] }}"

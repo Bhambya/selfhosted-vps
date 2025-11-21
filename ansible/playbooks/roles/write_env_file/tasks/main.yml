@@ -1,6 +1,14 @@
+- name: Lookup vars on the control node in one go
+  ansible.builtin.set_fact:
+    env_vars: |
+      {% for item in (env_file['vars'] | default({})) | dict2items %}
+      {{ item.key }}='{{ lookup("vars", item.value) }}'
+      {% endfor %}
+  delegate_to: localhost
+
 - name: Lookup secrets on the control node in one go
   ansible.builtin.set_fact:
-    secrets: |
+    env_secrets: |
       {% for item in (env_file['secrets'] | default({})) | dict2items %}
       {{ item.key }}='{{ lookup('bitwarden.secrets.lookup', item.value) }}'
       {% endfor %}
@@ -14,8 +22,6 @@
       {% for item in (env_file['fixed'] | default({})) | dict2items %}
       {{ item.key }}='{{ item.value }}'
       {% endfor %}
-      {% for item in (env_file['vars'] | default({})) | dict2items %}
-      {{ item.key }}='{{ lookup("vars", item.value) }}'
-      {% endfor %}
-      {{ secrets }}
+      {{ env_vars }}
+      {{ env_secrets }}
     mode: "{{ env_file['mode'] }}"

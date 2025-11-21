@@ -16,5 +16,6 @@
       {% endfor %}
       {% for item in (env_file['vars'] | default({})) | dict2items %}
       {{ item.key }}='{{ lookup("vars", item.value) }}'
+      {% endfor %}
       {{ secrets }}
     mode: "{{ env_file['mode'] }}"

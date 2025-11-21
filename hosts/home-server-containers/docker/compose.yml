@@ -30,6 +30,10 @@ services:
       - --accesslog.fields.headers.names.Authorization=drop
       - --accesslog.fields.headers.names.Accept-Encoding=drop
       - --accesslog.fields.headers.names.Accept-Language=drop
+      - --accesslog.fields.headers.names.Content-Security-Policy=drop
+      - --accesslog.fields.headers.names.Content-Type=drop
+      - --accesslog.fields.headers.names.Permissions-Policy=drop
+      - --accesslog.fields.headers.names.Referer=drop
       - --metrics.addInternals=true
       - --metrics.prometheus.addEntryPointsLabels=true
       - --metrics.prometheus.addRoutersLabels=true

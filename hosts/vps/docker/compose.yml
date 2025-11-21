@@ -325,7 +325,7 @@ services:
       - prom_data:/prometheus
 
   loki:
-    image: "grafana/loki:3.5.8"
+    image: "grafana/loki:3.6.1"
     container_name: loki
     restart: unless-stopped
     networks:
@@ -708,7 +708,7 @@ services:
       traefik.http.routers.chromium.tls.certresolver: "cloudflare"
 
   readeck:
-    image: "codeberg.org/readeck/readeck:0.20.4"
+    image: "codeberg.org/readeck/readeck:0.21.1"
     container_name: readeck
     restart: unless-stopped
     volumes:

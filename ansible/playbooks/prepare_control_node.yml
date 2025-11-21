@@ -17,13 +17,13 @@
       ansible.builtin.set_fact:
         bws_architecture: >-
           {%- set arch_map = {'arm64': 'aarch64'} -%}
-          {{ arch_map.get(ansible_architecture, ansible_architecture) }}
+          {{ arch_map.get(ansible_facts['architecture'], ansible_facts['architecture']) }}
 
     - name: Set bitwarden CLI OS family
       ansible.builtin.set_fact:
         bws_os_family: >-
           {%- set os_map = {'Darwin': 'apple-darwin'} -%}
-          {{ os_map.get(ansible_os_family, 'unknown-linux-gnu') }}
+          {{ os_map.get(ansible_facts['os_family'], 'unknown-linux-gnu') }}
 
     - name: Print a message
       ansible.builtin.debug:

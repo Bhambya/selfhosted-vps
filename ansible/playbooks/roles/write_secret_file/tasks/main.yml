@@ -1,12 +1,3 @@
-- name: Lookup secret on the control node
-  ansible.builtin.shell: "set -o pipefail && bws secret get {{ item['secret'] }} | jq -r '.value'"
-  args:
-    executable: /bin/bash
-  register: write_secret_file_bw_secret_output
-  changed_when: false
-  failed_when: write_secret_file_bw_secret_output.rc != 0
-  delegate_to: localhost
-
 - name: Make sure destination dir exists
   become: true
   ansible.builtin.file:
@@ -20,8 +11,8 @@
     dest: "{{ item.path }}"
     content: |
       {% if (item.base64 | default(False)) %}
-      {{ write_secret_file_bw_secret_output.stdout | b64decode }}
+      {{ lookup('bitwarden.secrets.lookup', item['secret']) | b64decode }}
       {% else %}
-      {{ write_secret_file_bw_secret_output.stdout }}
+      {{ lookup('bitwarden.secrets.lookup', item['secret']) }}
       {% endif %}
     mode: "{{ item.mode | default('600') }}"

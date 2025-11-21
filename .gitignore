@@ -40,3 +40,5 @@ terraform.rc
 # planout
 
 .bitwarden
+
+__pycache__

@@ -67,11 +67,19 @@ jobs:
       - name: Clear ANSIBLE_SSH_KEY env variable
         run: echo "ANSIBLE_SSH_KEY=" >> $GITHUB_ENV
 
-      - name: Add the VPS fingerprints to known_hosts
+      - name: Add the VPS host public keys to known_hosts
         run: |
           touch ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
           echo $VPS_HOST_SSH_PUBLIC_KEYS | sed "s/localhost/$VPS_HOST/g" >> ~/.ssh/known_hosts 
+
+      - name: Disable strict host key checking for VPN hosts
+        run: |
+          cat << EOF >> ~/.ssh/config
+          Host 10.13.*
+            StrictHostKeyChecking no
+            UserKnownHostsFile /dev/null
+          EOF
 
       - name: 🅰 Deploy docker on hosts(s)
         if: github.event_name != 'workflow_dispatch'

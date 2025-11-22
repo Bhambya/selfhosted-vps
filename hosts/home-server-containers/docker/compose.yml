@@ -191,7 +191,7 @@ services:
       - "/var/lib/docker-data/mealie:/app/data"
 
   qbittorrent:
-    image: ghcr.io/linuxserver/qbittorrent:5.1.2
+    image: ghcr.io/linuxserver/qbittorrent:5.1.4
     container_name: qbittorrent
     networks:
       proxy:

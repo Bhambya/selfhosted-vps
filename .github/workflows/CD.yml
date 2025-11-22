@@ -63,6 +63,9 @@ jobs:
           log-public-key: false
           ssh-private-key: ${{ env.ANSIBLE_SSH_KEY }}
 
+      - name: Clear ANSIBLE_SSH_KEY env variable
+        run: echo "ANSIBLE_SSH_KEY=" >> $GITHUB_ENV
+
       - name: Disable strict host key checking
         run: |
           cat << EOF >> ~/.ssh/config

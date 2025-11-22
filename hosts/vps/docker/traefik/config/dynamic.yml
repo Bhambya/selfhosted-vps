@@ -60,8 +60,11 @@ http:
         rewriteHeaders:
           rewrites:
             - header: "Location"
-              regex: '^https://(.+)\.home\.{{ env "BASE_DOMAIN" | replace "." "\\." }}(.*)'
-              replacement: 'https://$1-home.{{ env "BASE_DOMAIN" }}$2'
+              regex: '^https://(\w+?)\.home\.{{ env "BASE_DOMAIN" | replace "." "\\." }}(.*)$'
+              replacement: 'https://${1}-home.{{ env "BASE_DOMAIN" }}${2}'
+            - header: "Set-Cookie"
+              regex: '^(.+?)Domain\=(\w+?)\.home\.{{ env "BASE_DOMAIN" | replace "." "\\." }}(.*)$'
+              replacement: '${1}Domain=${2}-home.{{ env "BASE_DOMAIN" }}${3}'
     # request rewrite
     rewriteHomeHostHeader:
       plugin:

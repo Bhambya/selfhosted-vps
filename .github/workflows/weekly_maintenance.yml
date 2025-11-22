@@ -31,6 +31,7 @@ jobs:
           secrets: |
             38c9a270-f749-436d-bdff-b39000d8fd77 > ANSIBLE_SSH_KEY
             ae8d79f6-fb4a-434c-94f2-b3860149c5ec > VPS_HOST
+            683478bf-6fb8-4985-905f-b39d01641765 > VPS_HOST_SSH_FINGERPRINTS
 
       # Load the SSH private key into the ssh-agent
       - name: 🔑 Load SSH Key
@@ -39,13 +40,11 @@ jobs:
           log-public-key: false
           ssh-private-key: ${{ env.ANSIBLE_SSH_KEY }}
 
-      - name: Disable strict host key checking
+      - name: Add the VPS fingerprints to known_hosts
         run: |
-          cat << EOF >> ~/.ssh/config
-          Host $VPS_HOST
-            StrictHostKeyChecking no
-            UserKnownHostsFile /dev/null
-          EOF
+          touch ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          echo $VPS_HOST_SSH_FINGERPRINTS | sed "s/localhost/$VPS_HOST/g" >> ~/.ssh/known_hosts 
 
       - name: 🔨 Patch all hosts
         env:

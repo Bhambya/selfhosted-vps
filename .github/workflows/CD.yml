@@ -4,7 +4,17 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch: {}
+    paths:
+      - 'hosts/**'
+  workflow_dispatch:
+    inputs:
+      target_host:
+        description: "Target host"
+        required: true
+        type: choice
+        options:
+          - vps
+          - home-server-containers
 
 jobs:
   deploy:
@@ -16,6 +26,19 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+
+      - name: Fetch history for git diff
+        run: git fetch --depth=2
+
+      - name: Detect modified folders
+        id: detect-changes
+        run: |
+          if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
+            git fetch --unshallow
+          fi
+          folders=$(git diff --name-only HEAD~1 HEAD | grep '^hosts/' | cut -d/ -f2 | sort | uniq)
+          echo "Modified folders: $folders"
+          echo "folders=$folders" >> $GITHUB_OUTPUT
 
       - name: Install Ansible and dependencies
         run: |
@@ -48,21 +71,28 @@ jobs:
             UserKnownHostsFile /dev/null
           EOF
 
-      # Run the Ansible playbooks
-      - name: 🅰 Deploy VPS
+      - name: 🅰 Deploy docker on hosts(s)
+        if: github.event_name != 'workflow_dispatch'
         env:
           BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
           ANSIBLE_CONFIG: ansible/ansible.cfg
+        shell: bash
         run: |
-          ansible-playbook -i ansible/inventory.yml \
-           -e "local_repo_path=$GITHUB_WORKSPACE" \
-           ansible/playbooks/deploy_vps.yml
+          IFS=' ' read -r -a folder_array <<< "${{ steps.detect-changes.outputs.folders }}"
 
-      - name: 🅰 Deploy home server
+          for folder in "${folder_array[@]}"; do
+            ansible-playbook -i ansible/inventory.yml \
+             -e "local_repo_path=$GITHUB_WORKSPACE" \
+             ansible/playbooks/deploy-${folder}.yml
+          done
+
+      - name: 🅰 Deploy docker on specified host
+        if: github.event_name == 'workflow_dispatch'
         env:
           BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
           ANSIBLE_CONFIG: ansible/ansible.cfg
+        shell: bash
         run: |
           ansible-playbook -i ansible/inventory.yml \
-           -e "local_repo_path=$GITHUB_WORKSPACE" \
-           ansible/playbooks/deploy-home-server-docker.yml
+            -e "local_repo_path=$GITHUB_WORKSPACE" \
+            ansible/playbooks/deploy-${{ github.event.inputs.target_host }}.yml

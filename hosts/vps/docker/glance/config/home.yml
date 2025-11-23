@@ -155,6 +155,10 @@
             - UCsBjURrPoezykLs9EqgamOA # Fireship
             - UCBJycsmduvYEL83R_U4JriQ # Marques Brownlee
             - UCHnyfMqiRRG1u-2MsSQLbXA # Veritasium
+            - UCZNhwA1B5YqiY1nLzmM0ZRg # Christian Lempa
+            - UC4QZ_LsYcvcq7qOsOhpAX4A # ColdFusion
+            - UCMiJRAwDNSNzuYeN2uWa0pA # Mrwhosetheboss
+            - UCzIO0iX4yKW2P4NkmmKq1PA # 9to5Google
 
         - type: group
           widgets:
@@ -200,6 +204,6 @@
           # token: ...
           repositories:
             - glanceapp/glance
-            - go-gitea/gitea
+            - dani-garcia/vaultwarden
             - immich-app/immich
-            - syncthing/syncthing
+            - paperless-ngx/paperless-ngx

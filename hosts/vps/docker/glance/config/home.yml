@@ -1,0 +1,205 @@
+- name: Home
+  # Optionally, if you only have a single page you can hide the desktop navigation for a cleaner look
+  # hide-desktop-navigation: true
+  columns:
+    - size: small
+      widgets:
+        - type: calendar
+          first-day-of-week: monday
+
+        - type: rss
+          limit: 10
+          collapse-after: 3
+          cache: 12h
+          feeds:
+            - url: https://selfh.st/rss/
+              title: selfh.st
+            - url: https://ciechanow.ski/atom.xml
+            - url: https://www.joshwcomeau.com/rss.xml
+              title: Josh Comeau
+            - url: https://samwho.dev/rss.xml
+            - url: https://ishadeed.com/feed.xml
+              title: Ahmad Shadeed\
+
+        - type: custom-api
+          title: Gatus
+          cache: 1m
+          url: http://gatus:8080/api/v1/endpoints/statuses
+          template: |
+            {{ $up := 0 }}
+            {{ $down := 0 }}
+            {{ $totalChecks := 0 }}
+            {{ $successfulChecks := 0 }}
+            {{ range .JSON.Array "" }}
+              {{ $results := .Array "results" }}
+              {{ $totalChecks = add $totalChecks (len $results) }}
+              {{ range $results }}
+                {{ if .Bool "success" }}
+                  {{ $successfulChecks = add $successfulChecks 1 }}
+                {{ end }}
+              {{ end }}
+              {{ if gt (len $results) 0 }}
+                {{ $latestResult := index $results (sub (len $results) 1) }}
+                {{ if $latestResult.Bool "success" }}
+                  {{ $up = add $up 1 }}
+                {{ else }}
+                  {{ $down = add $down 1 }}
+                {{ end }}
+              {{ end }}
+            {{ end }}
+            {{ $uptime := 0 }}
+            {{ if gt $totalChecks 0 }}
+              {{ $uptime = div (mul $successfulChecks 1000) $totalChecks }}
+            {{ end }}
+
+            {{ define "popover" }}
+              <div data-popover-html>
+                <div style="margin: 5px;">
+                  <p class="margin-top-12" style="overflow-y: auto; text-align: justify; max-height: 20rem;">
+                    {{ range .Array "conditionResults" }}
+                      {{ if (.Bool "success") }}
+                        <p class="color-positive">{{ .String "condition" }}</p>
+                      {{ else }}
+                        <p class="color-negative">{{ .String "condition" }}</p>
+                      {{ end }}
+                    {{ end }}
+                  </p>
+                </div>
+              </div>
+            {{ end }}
+
+            <div class="widget-small-content-bounds">
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
+                <div>
+                  <p class="size-h3 color-highlight">{{ $up }}</p>
+                  <p class="size-h6">SITES UP</p>
+                </div>
+                <div>
+                  <p class="size-h3 color-highlight">{{ $down }}</p>
+                  <p class="size-h6">SITES DOWN</p>
+                </div>
+                <div>
+                  <p class="size-h3 color-highlight">{{ div $uptime 10.0 | printf "%.1f" }}%</p>
+                  <p class="size-h6">UPTIME</p>
+                </div>
+              </div>
+              <ul class="margin-top-10 list list-gap-10 collapsible-container" data-collapse-after="5">
+                {{ range .JSON.Array "" }}
+                  {{ $results := .Array "results" }}
+                  {{ $latestResult := index $results (sub (len $results) 1) }}
+                  {{ if not ($latestResult.Bool "success") }}
+                      <li class="flex items-center justify-between">
+                        <p class="size-h3 color-highlight">{{ .String "name" }}</p>
+                        <div data-popover-type="html" data-popover-position="above" data-popover-show-delay="500" style="align-content: center;">
+                          {{ template "popover" $latestResult }}
+                          <svg width="20" height="20" fill="var(--color-negative)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" />
+                          </svg>
+                        </div>
+                      </li>
+                  {{ end }}
+                {{ end }}
+                {{ range .JSON.Array "" }}
+                  {{ $results := .Array "results" }}
+                  {{ $latestResult := index $results (sub (len $results) 1) }}
+                  {{ if $latestResult.Bool "success" }}
+                      <li class="flex items-center justify-between">
+                        <p class="size-h3 color-highlight">{{ .String "name" }}</p>
+                        <div data-popover-type="html" data-popover-position="above" data-popover-show-delay="500" style="align-content: center;">
+                          {{ template "popover" $latestResult }}
+                          <svg width="20" height="20" fill="var(--color-positive)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
+                          </svg>
+                        </div>
+                      </li>
+                  {{ end }}
+                {{ end }}
+              </ul>
+            </div>
+
+        - type: custom-api
+          title: Immich stats
+          cache: 1d
+          url: https://home-server-containers/api/server/statistics
+          headers:
+            x-api-key: ${IMMICH_API_KEY}
+            Accept: application/json
+            Host: immich.home.${BASE_DOMAIN}
+          template: |
+            <div class="flex justify-between text-center">
+              <div>
+                  <div class="color-highlight size-h3">{{ .JSON.Int "photos" | formatNumber }}</div>
+                  <div class="size-h6">PHOTOS</div>
+              </div>
+              <div>
+                  <div class="color-highlight size-h3">{{ .JSON.Int "videos" | formatNumber }}</div>
+                  <div class="size-h6">VIDEOS</div>
+              </div>
+              <div>
+                  <div class="color-highlight size-h3">{{ div (.JSON.Int "usage" | toFloat) 1073741824 | toInt | formatNumber }}GB</div>
+                  <div class="size-h6">USAGE</div>
+              </div>
+            </div>
+
+    - size: full
+      widgets:
+        - type: group
+          widgets:
+            - type: hacker-news
+            - type: lobsters
+
+        - type: videos
+          channels:
+            - UCXuqSBlHAE6Xw-yeJA0Tunw # Linus Tech Tips
+            - UCR-DXc1voovS8nhAvccRZhg # Jeff Geerling
+            - UCsBjURrPoezykLs9EqgamOA # Fireship
+            - UCBJycsmduvYEL83R_U4JriQ # Marques Brownlee
+            - UCHnyfMqiRRG1u-2MsSQLbXA # Veritasium
+
+        - type: group
+          widgets:
+            - type: reddit
+              subreddit: technology
+              show-thumbnails: true
+            - type: reddit
+              subreddit: selfhosted
+              show-thumbnails: true
+
+    - size: small
+      widgets:
+        - type: weather
+          location: Berlin, Germany
+          units: metric
+          hour-format: 24h
+
+        - type: markets
+          markets:
+            - symbol: ^NSEI
+              name: NIFTY 50
+            - symbol: SPY
+              name: S&P 500
+            - symbol: AMZN
+              name: Amazon.com, Inc.
+            - symbol: META
+              name: Meta Platforms, Inc.
+            - symbol: GOOG
+              name: Alphabet
+            - symbol: NVDA
+              name: NVIDIA
+            - symbol: AAPL
+              name: Apple
+            - symbol: MSFT
+              name: Microsoft
+            - symbol: BTC-USD
+              name: Bitcoin
+
+        - type: releases
+          cache: 1d
+          # Without authentication the Github API allows for up to 60 requests per hour. You can create a
+          # read-only token from your Github account settings and use it here to increase the limit.
+          # token: ...
+          repositories:
+            - glanceapp/glance
+            - go-gitea/gitea
+            - immich-app/immich
+            - syncthing/syncthing

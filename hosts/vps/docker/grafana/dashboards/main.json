@@ -872,6 +872,7 @@
             "cellOptions": {
               "type": "auto"
             },
+            "filterable": false,
             "footer": {
               "reducers": []
             },
@@ -931,6 +932,23 @@
         }
       ],
       "title": "Services down according to gatus",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "includeByName": {},
+            "indexByName": {},
+            "orderBy": [],
+            "orderByMode": "manual",
+            "renameByName": {
+              "name": "Name"
+            }
+          }
+        }
+      ],
       "type": "table"
     },
     {
@@ -1187,7 +1205,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1222,7 +1241,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.1",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
@@ -1287,7 +1306,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1323,7 +1343,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "12.0.0",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "disableTextWrap": false,
@@ -1375,6 +1395,7 @@
               "type": "linear"
             },
             "showPoints": "auto",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
               "group": "A",
@@ -1389,7 +1410,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -1421,7 +1443,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "12.0.0",
+      "pluginVersion": "12.3.0",
       "targets": [
         {
           "disableTextWrap": false,
@@ -1455,5 +1477,5 @@
   "timezone": "browser",
   "title": "Main Dashboard",
   "uid": "main_dashboard",
-  "version": 1
+  "version": 2
 }

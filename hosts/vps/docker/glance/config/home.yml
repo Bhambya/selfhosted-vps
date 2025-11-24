@@ -120,11 +120,11 @@
         - type: custom-api
           title: Immich stats
           cache: 1d
-          url: https://home-server-containers/api/server/statistics
+          url: https://immich.${BASE_DOMAIN}/api/server/statistics
+          allow-insecure: true
           headers:
-            x-api-key: ${IMMICH_API_KEY}
+            x-api-key: "${IMMICH_API_KEY}"
             Accept: application/json
-            Host: immich.home.${BASE_DOMAIN}
           template: |
             <div class="flex justify-between text-center">
               <div>

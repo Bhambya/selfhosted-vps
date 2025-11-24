@@ -647,7 +647,7 @@ services:
       - POSTGRES_PASSWORD=password
     restart: unless-stopped
     volumes:
-      - /var/lib/docker-data/postgres:/var/lib/postgresql/18/docker
+      - /var/lib/docker-data/postgres/data:/var/lib/postgresql/18/docker
 
   linkwarden:
     image: ghcr.io/linkwarden/linkwarden:v2.13.1
@@ -782,12 +782,64 @@ services:
       traefik.http.routers.glance.rule: "Host(`glance.${BASE_DOMAIN}`)"
       traefik.http.services.glance.loadbalancer.server.port: "8080"
 
+  redis-docmost:
+    image: "redis:8.4.0"
+    container_name: "redis-docmost"
+    restart: unless-stopped
+    networks:
+      docmost:
+    command: bash -c 'redis-server --port 6379 --save 20 1 --loglevel warning --requirepass "${REDIS_PASSWORD}"'
+    volumes:
+      - redis-docmost-cache:/data
+
+  docmost:
+    image: "docmost/docmost:0.23.2"
+    container_name: docmost
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis-docmost
+    environment:
+      APP_URL: "https://wiki.${BASE_DOMAIN}"
+      APP_SECRET: "${DOCMOST_APP_SECRET}"
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/docmost?schema=public
+      REDIS_URL: redis://default:${REDIS_PASSWORD}@redis-docmost:6379/0
+      DISABLE_TELEMETRY: "true"
+    networks:
+      - docmost
+      - proxy
+      - postgres
+    volumes:
+      - /var/lib/docker-data/docmost/:/app/data/storage
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.docmost.rule: "Host(`wiki.${BASE_DOMAIN}`)"
+      traefik.http.services.docmost.loadbalancer.server.port: "3000"
+
+  trilium:
+    image: ghcr.io/triliumnext/trilium:v0.99.5
+    container_name: trilium
+    restart: unless-stopped
+    environment:
+      - TRILIUM_DATA_DIR=/home/node/trilium-data
+    networks:
+      - proxy
+    volumes:
+      - /var/lib/docker-data/trilium:/home/node/trilium-data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.trilium.rule: "Host(`notes.${BASE_DOMAIN}`)"
+      traefik.http.services.trilium.loadbalancer.server.port: "8080"
+
 volumes:
   crowdsec-db:
     name: crowdsec-db
   crowdsec-config:
     name: crowdsec-config
   redis-authelia-cache:
+  redis-docmost-cache:
   redis-paperless-cache:
   prom_data:
   loki_data:
@@ -804,3 +856,4 @@ networks:
   paperless:
     name: "paperless"
   postgres:
+  docmost:

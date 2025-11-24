@@ -67,6 +67,8 @@ access_control:
         - 'whatsapp.{{ mustEnv "BASE_DOMAIN" }}'
         - 'github-release-monitor.{{ mustEnv "BASE_DOMAIN" }}'
         - 'glance.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'wiki.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'notes.{{ mustEnv "BASE_DOMAIN" }}'
       policy: 'two_factor'
       subject: 'group:admin'
     - domain_regex:

@@ -19,8 +19,8 @@
 
     # State management
     state: "{{ item.state | default('present') }}"
-    disabled: "{{ item.disabled | default(no) }}"
-    backup: "{{ item.backup | default(no) }}"
+    disabled: "{{ item.disabled | default(false) }}"
+    backup: "{{ item.backup | default(false) }}"
   loop: "{{ cron_jobs }}"
   loop_control:
     label: "{{ item.name }}"

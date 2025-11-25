@@ -463,6 +463,7 @@ services:
       - /var/lib/docker-data/paperless-ngx:/var/lib/docker-data/paperless-ngx:ro
       - /var/lib/docker-data/readeck:/var/lib/docker-data/readeck:ro
       - /var/lib/docker-data/github-release-monitor:/var/lib/docker-data/github-release-monitor:ro
+      - /var/lib/docker-data/postgres:/var/lib/docker-data/postgres:ro
     environment:
       TZ: ${TIME_ZONE}
       BACKREST_DATA: /data

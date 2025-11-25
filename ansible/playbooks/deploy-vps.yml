@@ -137,6 +137,7 @@
         file: "{{ github_workdir }}/hosts/vps/crons.yml"
 
     - name: Apply cron role
+      become: true
       ansible.builtin.include_role:
         name: manage_crons
  

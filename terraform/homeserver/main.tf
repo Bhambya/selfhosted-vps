@@ -27,7 +27,7 @@ module "adguard" {
   hostname         = "adguard"
   cpu_cores        = 2
   dedicated_memory = 512
-  disk_size        = 4
+  disk_size        = 8
   disk_import_from = proxmox_virtual_environment_download_file.ubuntu_cloud_image.id
   start_order      = 1
   up_delay         = 30
@@ -61,7 +61,7 @@ module "tailscale" {
   hostname         = "tailscale"
   cpu_cores        = 2
   dedicated_memory = 512
-  disk_size        = 4
+  disk_size        = 8
   disk_import_from = proxmox_virtual_environment_download_file.ubuntu_cloud_image.id
   start_order      = 1
   ipv4_address     = "192.168.1.105/24"
@@ -96,7 +96,7 @@ module "wireguard-router" {
   hostname         = "wireguard-router"
   cpu_cores        = 2
   dedicated_memory = 512
-  disk_size        = 4
+  disk_size        = 8
   disk_import_from = proxmox_virtual_environment_download_file.ubuntu_cloud_image.id
   start_order      = 1
   up_delay         = 30

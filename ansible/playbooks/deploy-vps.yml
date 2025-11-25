@@ -132,14 +132,9 @@
       debug:
         var: docker_output.stdout_lines
 
-    - name: Get cron files on remote machine
-      ansible.builtin.find:
-        paths: "{{ host_conf_path + '/crons' }}"
-      register: cron_files_find_result
-
     - name: Load cron variables based on environment
       ansible.builtin.include_vars:
-        file: "{{ host_conf_path }}/crons.yml"
+        file: "{{ github_workdir }}/hosts/vps/crons.yml"
 
     - name: Apply cron role
       ansible.builtin.include_role:

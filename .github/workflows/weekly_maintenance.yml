@@ -60,16 +60,6 @@ jobs:
             UserKnownHostsFile /dev/null
           EOF
 
-      - name: 🔨 Patch all hosts
-        env:
-          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
-          ANSIBLE_CONFIG: ansible/ansible.cfg
-        run: |
-          ansible-playbook -i ansible/inventory.yml \
-           -l 'all:!home-server-wireguard-router-wg1' \
-           -e "batch_size=2" \
-           ansible/playbooks/patch.yml
-
       - name: 🐳 Prune unused docker images
         env:
           BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
@@ -78,3 +68,13 @@ jobs:
           ansible-playbook -i ansible/inventory.yml \
            -e "batch_size=${{ github.event.inputs.batch_size || '2' }}" \
            ansible/playbooks/docker-prune.yml
+
+      - name: 🔨 Patch all hosts
+        env:
+          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
+          ANSIBLE_CONFIG: ansible/ansible.cfg
+        run: |
+          ansible-playbook -i ansible/inventory.yml \
+           -l 'all:!home-server-wireguard-router-wg1' \
+           -e "batch_size=${{ github.event.inputs.batch_size || '2' }}" \
+           ansible/playbooks/patch.yml

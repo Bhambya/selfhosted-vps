@@ -29,6 +29,13 @@ cron_jobs:
     minute: "3"
     user: "root"
 
+  # At 01:04, every day
+  - name: "Postgres DB Backup"
+    job: '{{ host_conf_path }}/crons/postgres-backup.sh -c postgres -u postgres -p password -d all -b /var/lib/docker-data/postgres/backups || curl -X POST -F "body=Cron Postgres DB backup failed!" http://127.0.0.1:8000/notify/apprise'
+    hour: "1"
+    minute: "4"
+    user: "root"
+
   # Every hour, every day
   - name: "crowdsec hub upgrade"
     job: '{{ host_conf_path }}/crons/crowsec-hub-upgrade.sh || curl -X POST -F "body=Crowdsec hub upgrade failed!" http://127.0.0.1:8000/notify/apprise'

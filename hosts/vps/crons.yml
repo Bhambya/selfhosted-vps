@@ -32,5 +32,5 @@ cron_jobs:
   # Every hour, every day
   - name: "crowdsec hub upgrade"
     job: '{{ host_conf_path }}/crons/crowsec-hub-upgrade.sh || curl -X POST -F "body=Crowdsec hub upgrade failed!" http://127.0.0.1:8000/notify/apprise'
-    hour: "1"
+    minute: "0"
     user: "root"

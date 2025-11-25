@@ -76,5 +76,5 @@ jobs:
           ANSIBLE_CONFIG: ansible/ansible.cfg
         run: |
           ansible-playbook -i ansible/inventory.yml \
-           -e "batch_size=${{ inputs.batch_size || '2' }}" \
+           -e "batch_size=${{ github.event.inputs.batch_size || '2' }}" \
            ansible/playbooks/docker-prune.yml

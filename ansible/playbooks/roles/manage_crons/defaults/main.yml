@@ -1,0 +1,3 @@
+---
+# defaults file for manage_crons
+cron_jobs: []

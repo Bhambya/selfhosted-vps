@@ -1,0 +1,26 @@
+---
+- name: Manage cron jobs
+  ansible.builtin.cron:
+    name: "{{ item.name }}"
+    user: "{{ item.user | default(omit) }}"
+    job: "{{ item.job | default(omit) }}"
+    
+    # Scheduling (Defaults to '*' if not specified)
+    minute: "{{ item.minute | default('*') }}"
+    hour: "{{ item.hour | default('*') }}"
+    day: "{{ item.day | default('*') }}"
+    month: "{{ item.month | default('*') }}"
+    weekday: "{{ item.weekday | default('*') }}"
+    
+    # Special times (e.g., @reboot, @daily)
+    special_time: "{{ item.special_time | default(omit) }}"
+    
+    cron_file: "{{ item.cron_file | default(omit) }}"
+
+    # State management
+    state: "{{ item.state | default('present') }}"
+    disabled: "{{ item.disabled | default(no) }}"
+    backup: "{{ item.backup | default(no) }}"
+  loop: "{{ cron_jobs }}"
+  loop_control:
+    label: "{{ item.name }}"

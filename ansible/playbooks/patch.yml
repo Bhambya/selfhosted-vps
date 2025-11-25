@@ -28,6 +28,30 @@
         msg: "Reboot is required by the following packages: {{ reboot_packages['content'] | b64decode }}"
       when: reboot_required_file.stat.exists
 
+    - name: Check if Docker is installed
+      command: docker --version
+      register: docker_check
+      # valid_return_codes alone isn't enough; we silence the failure explicitly
+      failed_when: false
+      changed_when: false
+
+    # If docker was updated above, containers will be restarted
+    # We should wait for them to be healthy or else the reboot will not start them
+    - name: Wait for ALL running containers to be healthy
+      become: true
+      shell: |
+        docker ps -q | xargs -r docker inspect --format '{% raw %}{{if .State.Health}}{{.State.Health.Status}}{{else}}healthy{{end}}{% endraw %}'
+      register: docker_health
+      # Keep retrying until "starting" and "unhealthy" are absent from the output
+      until: >
+        'starting' not in docker_health.stdout and
+        'unhealthy' not in docker_health.stdout
+      retries: 20
+      delay: 10
+      changed_when: false
+      # ONLY run this if docker is installed on this host
+      when: docker_check.rc == 0
+
     - name: Reboot
       ansible.builtin.reboot:
         reboot_timeout: 300

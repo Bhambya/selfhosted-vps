@@ -138,7 +138,7 @@
 
     - name: Apply cron role
       become: true
-      ansible.builtin.include_role:
+      ansible.builtin.import_role:
         name: manage_crons
  
   handlers:

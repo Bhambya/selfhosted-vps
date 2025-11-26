@@ -24,7 +24,7 @@ jobs:
 
       - name: Install Ansible
         run: |
-          sudo apt-get install python-pip
+          sudo apt-get install python3-pip
           pip install -r ./ansible/requirements.txt
           ansible-galaxy collection install -r ./ansible/requirements.yml
           ansible-galaxy role install -r ./ansible/requirements.yml

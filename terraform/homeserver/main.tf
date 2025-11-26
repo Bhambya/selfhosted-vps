@@ -138,7 +138,6 @@ module "containers" {
   additional_packages = [
     "nfs-common",
     "restic",
-    "logrotate",
     "sqlite3"
   ]
   additional_rumcmds = [

@@ -3,41 +3,41 @@
 cron_jobs:
   # At 01:00, every day
   - name: "Authelia DB Backup"
-    job: '{{ host_conf_path }}/crons/sqlite-db-backup.sh /var/lib/docker-data/authelia/config db.sqlite3 || curl -X POST -F "body=Cron authelia DB backup failed!" http://127.0.0.1:8000/notify/apprise'
+    job: '{{ repo_path }}/scripts/sqlite-db-backup.sh /var/lib/docker-data/authelia/config db.sqlite3 || curl -X POST -F "body=Cron authelia DB backup failed!" http://127.0.0.1:8000/notify/apprise'
     hour: "1"
     minute: "0"
     user: "root"
 
   # At 01:01, every day
   - name: "lldap DB Backup"
-    job: '{{ host_conf_path }}/crons/sqlite-db-backup.sh /var/lib/docker-data/lldap users.db || curl -X POST -F "body=Cron lldap DB backup failed!" http://127.0.0.1:8000/notify/apprise'
+    job: '{{ repo_path }}/scripts/sqlite-db-backup.sh /var/lib/docker-data/lldap users.db || curl -X POST -F "body=Cron lldap DB backup failed!" http://127.0.0.1:8000/notify/apprise'
     hour: "1"
     minute: "1"
     user: "root"
 
   # At 01:02, every day
   - name: "paperless-ngx DB Backup"
-    job: '{{ host_conf_path }}/crons/sqlite-db-backup.sh /var/lib/docker-data/paperless-ngx/data db.sqlite3 || curl -X POST -F "body=Cron paperless-ngx DB backup failed!" http://127.0.0.1:8000/notify/apprise'
+    job: '{{ repo_path }}/scripts/sqlite-db-backup.sh /var/lib/docker-data/paperless-ngx/data db.sqlite3 || curl -X POST -F "body=Cron paperless-ngx DB backup failed!" http://127.0.0.1:8000/notify/apprise'
     hour: "1"
     minute: "2"
     user: "root"
 
   # At 01:03, every day
   - name: "vaultwarden DB Backup"
-    job: '{{ host_conf_path }}/crons/sqlite-db-backup.sh /var/lib/docker-data/vaultwarden db.sqlite3 || curl -X POST -F "body=Cron vaultwarden DB backup failed!" http://127.0.0.1:8000/notify/apprise'
+    job: '{{ repo_path }}/scripts/sqlite-db-backup.sh /var/lib/docker-data/vaultwarden db.sqlite3 || curl -X POST -F "body=Cron vaultwarden DB backup failed!" http://127.0.0.1:8000/notify/apprise'
     hour: "1"
     minute: "3"
     user: "root"
 
   # At 01:04, every day
   - name: "Postgres DB Backup"
-    job: '{{ host_conf_path }}/crons/postgres-backup.sh -c postgres -u postgres -p password -d all -b /var/lib/docker-data/postgres/backups || curl -X POST -F "body=Cron Postgres DB backup failed!" http://127.0.0.1:8000/notify/apprise'
+    job: '{{ repo_path }}/scripts/postgres-backup.sh -c postgres -u postgres -p password -d all -b /var/lib/docker-data/postgres/backups || curl -X POST -F "body=Cron Postgres DB backup failed!" http://127.0.0.1:8000/notify/apprise'
     hour: "1"
     minute: "4"
     user: "root"
 
   # Every hour, every day
   - name: "crowdsec hub upgrade"
-    job: '{{ host_conf_path }}/crons/crowsec-hub-upgrade.sh || curl -X POST -F "body=Crowdsec hub upgrade failed!" http://127.0.0.1:8000/notify/apprise'
+    job: '{{ repo_path }}/scripts/crowsec-hub-upgrade.sh || curl -X POST -F "body=Crowdsec hub upgrade failed!" http://127.0.0.1:8000/notify/apprise'
     minute: "0"
     user: "root"

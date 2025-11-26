@@ -50,10 +50,6 @@ http:
       headers:
         customrequestheaders:
           Host: excalidraw.home.{{ env "BASE_DOMAIN" }}
-    audiobookshelf-host-rewrite:
-      headers:
-        customrequestheaders:
-          Host: audiobookshelf.home.{{ env "BASE_DOMAIN" }}
     # response rewrite
     rewriteHomeResponseHeaders:
       plugin:
@@ -120,13 +116,6 @@ http:
         - "excalidraw-host-rewrite@file"
       service: home
       rule: 'Host(`excalidraw.{{ env "BASE_DOMAIN" }}`)'
-      tls:
-        certResolver: cloudflare
-    audiobookshelf:
-      middlewares:
-        - "audiobookshelf-host-rewrite@file"
-      service: home
-      rule: 'Host(`audiobookshelf.{{ env "BASE_DOMAIN" }}`)'
       tls:
         certResolver: cloudflare
     homeServices:

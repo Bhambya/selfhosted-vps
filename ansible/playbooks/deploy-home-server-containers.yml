@@ -84,4 +84,12 @@
       debug:
         var: docker_output.stdout_lines
 
+    - name: Load cron variables based on environment
+      ansible.builtin.include_vars:
+        file: "{{ github_workdir }}/hosts/home-server-containers/crons.yml"
+
+    - name: Apply cron role
+      become: true
+      ansible.builtin.import_role:
+        name: manage_crons
 

@@ -7,10 +7,3 @@ cron_jobs:
     hour: "1"
     minute: "0"
     user: "root"
-
-  # At 01:01, every day
-  - name: "Audiobookshelf DB Backup"
-    job: '{{ repo_path }}/scripts/sqlite-db-backup.sh /var/lib/docker-data/audiobookshelf/config absdatabase.sqlite || curl -X POST -F "body=Cron Audiobookshelf DB backup failed!" http://127.0.0.1:8000/notify/apprise'
-    hour: "1"
-    minute: "1"
-    user: "root"

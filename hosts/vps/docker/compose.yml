@@ -709,7 +709,7 @@ services:
       traefik.http.routers.chromium.tls.certresolver: "cloudflare"
 
   readeck:
-    image: "codeberg.org/readeck/readeck:0.21.2"
+    image: "codeberg.org/readeck/readeck:0.21.3"
     container_name: readeck
     restart: unless-stopped
     volumes:

@@ -52,6 +52,7 @@ access_control:
         - 'filebrowser-vps.{{ mustEnv "BASE_DOMAIN" }}'
         - 'ldap.{{ mustEnv "BASE_DOMAIN" }}'
         - 'paperless.{{ mustEnv "BASE_DOMAIN" }}'
+        - 'atuin.{{ mustEnv "BASE_DOMAIN" }}'
       policy: 'bypass' # these have their own auth or use OIDC
     - domain: 
         - 'traefik-dashboard.{{ mustEnv "BASE_DOMAIN" }}'

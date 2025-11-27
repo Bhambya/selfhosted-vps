@@ -837,6 +837,7 @@ services:
   audiobookshelf:
     image: ghcr.io/advplyr/audiobookshelf:2.30.0
     container_name: audiobookshelf
+    restart: unless-stopped
     networks:
       proxy:
     volumes:
@@ -851,6 +852,30 @@ services:
       traefik.http.services.audiobookshelf.loadbalancer.server.port: "80"
       traefik.http.routers.audiobookshelf.tls: "true"
       traefik.http.routers.audiobookshelf.tls.certresolver: "cloudflare"
+
+  atuin:
+    container_name: atuin
+    restart: unless-stopped
+    image: ghcr.io/atuinsh/atuin:v18.10.0
+    command: server start
+    networks:
+      - proxy
+      - postgres
+    ports:
+      - 127.0.0.1:8888:8888
+    environment:
+      ATUIN_HOST: "0.0.0.0"
+      ATUIN_OPEN_REGISTRATION: "false"
+      ATUIN_DB_URI: postgresql://postgres:password@postgres:5432/atuin
+      RUST_LOG: info,atuin_server=debug
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.atuin.rule: "Host(`atuin.${BASE_DOMAIN}`)"
+      traefik.http.services.atuin.loadbalancer.server.port: "8888"
+      traefik.http.routers.atuin.tls: "true"
+      traefik.http.routers.atuin.tls.certresolver: "cloudflare"
+    depends_on:
+      - postgres
 
 volumes:
   crowdsec-db:

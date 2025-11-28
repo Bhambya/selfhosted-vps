@@ -1,0 +1,8 @@
+name: crowdsecurity/qbittorrent-whitelists
+description: "Whitelist false positive from qbittorrent"
+filter: "evt.Meta.service == 'http' && evt.Meta.log_type == 'http_access-log'"
+whitelist:
+  reason: "Whitelist false positive from qbittorrent"
+  expression:
+   # qbittorrent throws 404 when typing paths which don't exist
+   - evt.Parsed.request_addr contains 'qbittorrent' && evt.Meta.http_verb == 'GET' && evt.Meta.http_status == '404' && evt.Parsed.request matches '/api/v2/app/getDirectoryContent'

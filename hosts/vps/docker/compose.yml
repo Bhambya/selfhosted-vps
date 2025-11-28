@@ -460,6 +460,7 @@ services:
       - /var/lib/docker-data/lldap/:/var/lib/docker-data/lldap:ro
       - /var/lib/docker-data/vaultwarden:/var/lib/docker-data/vaultwarden:ro
       - /var/lib/docker-data/apprise/config:/var/lib/docker-data/apprise/config/:ro
+      - /var/lib/docker-data/audiobookshelf:/var/lib/docker-data/audiobookshelf/:ro
       - /var/lib/docker-data/backrest/config:/var/lib/docker-data/backrest/config/:ro
       - /var/lib/docker-data/paperless-ngx:/var/lib/docker-data/paperless-ngx:ro
       - /var/lib/docker-data/readeck:/var/lib/docker-data/readeck:ro

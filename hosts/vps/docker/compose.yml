@@ -34,7 +34,7 @@ services:
       traefik.http.routers.lldap.tls.certresolver: "cloudflare"
 
   authelia:
-    image: "ghcr.io/authelia/authelia:4.39.14"
+    image: "ghcr.io/authelia/authelia:4.39.15"
     container_name: "authelia"
     restart: "unless-stopped"
     volumes:

@@ -20,16 +20,6 @@ endpoints:
         description: "home server: healthcheck failed"
         send-on-resolved: true
 
-  - name: 'auth.${BASE_DOMAIN}'
-    url: "https://auth.${BASE_DOMAIN}/"
-    interval: 60s
-    conditions:
-      - "[STATUS] == 200"
-    alerts:
-      - type: telegram
-        description: "home server: healthcheck failed"
-        send-on-resolved: true
-
   - name: filebrowser
     url: "https://filebrowser.home.${BASE_DOMAIN}/"
     interval: 60s

@@ -500,7 +500,7 @@ services:
       traefik.http.routers.apprise.tls.certresolver: "cloudflare"
 
   gotenberg:
-    image: "docker.io/gotenberg/gotenberg:8.25.0"
+    image: "docker.io/gotenberg/gotenberg:8.25.1"
     container_name: gotenberg
     user: $UID
     restart: unless-stopped

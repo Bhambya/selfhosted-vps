@@ -747,7 +747,7 @@ services:
 
   github-release-monitor:
     container_name: "github-release-monitor"
-    image: "ghcr.io/iamspido/github-release-monitor:1.3.0"
+    image: "ghcr.io/iamspido/github-release-monitor:1.4.0"
     restart: "unless-stopped"
     user: $UID
     labels:

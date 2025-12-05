@@ -31,12 +31,13 @@ jobs:
         run: git fetch --depth=2
 
       - name: Detect modified folders
+        if: github.event_name == 'workflow_dispatch'
         id: detect-changes
         run: |
           if [ "$(git rev-parse --is-shallow-repository)" = "true" ]; then
             git fetch --unshallow
           fi
-          folders=$(git diff --name-only HEAD~1 HEAD | grep '^hosts/' | cut -d/ -f2 | sort | uniq | tr '\n' ' ')
+          folders=$(git diff --name-only HEAD~1 HEAD | grep '^hosts/' | cut -d/ -f2 | sort | uniq | tr '\n' ' ' | xargs)
           echo "Modified folders: $folders"
           echo "folders=$folders" >> $GITHUB_OUTPUT
 
@@ -81,27 +82,15 @@ jobs:
           EOF
 
       - name: 🅰 Deploy docker on hosts(s)
-        if: github.event_name != 'workflow_dispatch'
         env:
           BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
           ANSIBLE_CONFIG: ansible/ansible.cfg
         shell: bash
         run: |
-          IFS=' ' read -r -a folder_array <<< "${{ steps.detect-changes.outputs.folders }}"
+          IFS=' ' read -r -a folder_array <<< "${{ steps.detect-changes.outputs.folders || github.event.inputs.target_host }}"
 
           for folder in "${folder_array[@]}"; do
             ansible-playbook -i ansible/inventory.yml \
              -e "local_repo_path=$GITHUB_WORKSPACE" \
              ansible/playbooks/deploy-${folder}.yml
           done
-
-      - name: 🅰 Deploy docker on specified host
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          BWS_ACCESS_TOKEN: ${{ secrets.BWS_ACCESS_TOKEN }}
-          ANSIBLE_CONFIG: ansible/ansible.cfg
-        shell: bash
-        run: |
-          ansible-playbook -i ansible/inventory.yml \
-            -e "local_repo_path=$GITHUB_WORKSPACE" \
-            ansible/playbooks/deploy-${{ github.event.inputs.target_host }}.yml

@@ -129,7 +129,7 @@ endpoints:
         send-on-resolved: true
 
   - name: "Home server reachability"
-    url: "icmp://home-server-containers"
+    url: "icmp://home-server-wireguard-router"
     interval: 60s
     conditions:
       - "[CONNECTED] == true"

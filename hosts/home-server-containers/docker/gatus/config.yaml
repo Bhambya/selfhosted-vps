@@ -104,10 +104,10 @@ endpoints:
         send-on-resolved: true
 
   - name: 'Internet check'
-    url: '1.1.1.1'
+    url: '8.8.8.8'
     interval: 60s
     dns:
-      query-name: "cloudflare.com"
+      query-name: "google.com"
       query-type: "A"
     conditions:
       - "[DNS_RCODE] == NOERROR"

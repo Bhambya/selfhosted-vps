@@ -104,13 +104,10 @@ endpoints:
         send-on-resolved: true
 
   - name: 'Internet check'
-    url: '8.8.8.8'
+    url: 'icmp://cloudflare.com'
     interval: 60s
-    dns:
-      query-name: "google.com"
-      query-type: "A"
     conditions:
-      - "[DNS_RCODE] == NOERROR"
+      - "[CONNECTED] == true"
     alerts:
       - type: telegram
         description: "home server: healthcheck failed"
